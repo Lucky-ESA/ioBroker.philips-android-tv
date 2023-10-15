@@ -685,7 +685,6 @@ class PhilipsAndroidTv extends utils.Adapter {
                     if (this.clients[ip] == null) {
                         //const check = await this.onlineCheck(`http://${obj.message}:1925/6/system`);
                         const check = { notifyChange: "http" };
-                        this.log.warn(`TEST - ${JSON.stringify(check)}`);
                         if (check != null && check.notifyChange != null) {
                             this.pairing["text"] = constants.pairingText.button_pin[this.lang];
                             this.log.info(`Start pairing - ${JSON.stringify(check)}`);
