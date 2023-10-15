@@ -1,0 +1,110 @@
+{
+    "common": {
+        "name": "philips-android-tv",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "uk": "Початкова версія",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "philips-android-tv",
+        "titleLang": {
+            "en": "philips-android-tv",
+            "de": "Philips-Android-TV",
+            "ru": "Philips-Android-TV",
+            "pt": "philips-android-tv",
+            "nl": "philips-android-tv",
+            "fr": "philips-android-tv",
+            "it": "philips-android-tv",
+            "es": "philips-android-tv",
+            "pl": "telewizor-philips-android-tv",
+            "uk": "philips-android-tv",
+            "zh-cn": "飞利浦 Android 电视"
+        },
+        "desc": {
+            "en": "philips control",
+            "de": "Philips-Steuerung",
+            "ru": "филипс контроль",
+            "pt": "controle philips",
+            "nl": "Philips controle",
+            "fr": "contrôle philips",
+            "it": "controllo philips",
+            "es": "controles philips",
+            "pl": "sterowanie Philipsem",
+            "uk": "управління philips",
+            "zh-cn": "飞利浦控制"
+        },
+        "authors": [
+            "Lucky-ESA <github@luckyskills.de>"
+        ],
+        "keywords": [
+            "Control your philips android tv"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "philips-android-tv.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/Lucky-ESA/ioBroker.philips-android-tv/master/admin/philips-android-tv.png",
+        "readme": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "multimedia",
+        "compact": true,
+        "messagebox": true,
+        "connectionType": "local",
+        "dataSource": "poll",
+        "adminUI": {
+            "config": "json"
+        },
+        "dependencies": [
+            {
+                "js-controller": ">=3.3.22"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=5.1.13"
+            }
+        ]
+    },
+    "native": {
+        "tv": [],
+        "interval": 5,
+        "icons": []
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}

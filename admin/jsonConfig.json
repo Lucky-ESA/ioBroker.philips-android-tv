@@ -1,0 +1,326 @@
+{
+    "i18n": true,
+    "type": "tabs",
+    "items": {
+        "tab1": {
+            "type": "panel",
+            "label": "Tab TV",
+            "items": {
+                "_headerAdapter": {
+                    "type": "header",
+                    "text": "philips-android-tv adapter settings",
+                    "size": 2
+                },
+                "tv": {
+                    "newLine": true,
+                    "sm": 12,
+                    "noDelete": false,
+                    "type": "table",
+                    "items": [
+                        {
+                            "type": "checkbox",
+                            "attr": "activ",
+                            "width": "60px",
+                            "title": "activ",
+                            "tooltip": "activ_tt",
+                            "filter": true,
+                            "sort": true,
+                            "default": false,
+                            "style": {
+                                "textAlign": "center",
+                                "width": "60px"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "attr": "tvname",
+                            "width": "200px",
+                            "title": "name",
+                            "tooltip": "name_tt",
+                            "filter": false,
+                            "sort": false,
+                            "default": "Dummy",
+                            "style": {
+                                "width": "200px"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "attr": "ip",
+                            "width": "150px",
+                            "title": "tvip",
+                            "tooltip": "tvip_tt",
+                            "filter": true,
+                            "sort": true,
+                            "default": "127.0.0.1",
+                            "style": {
+                                "width": "150px"
+                            }
+                        },
+                        {
+                            "type": "select",
+                            "attr": "api",
+                            "width": "60px",
+                            "title": "api",
+                            "tooltip": "api_tt",
+                            "options": [
+                                { "label": "V6", "value": 6 },
+                                { "label": "V5", "value": 5 },
+                                { "label": "V1", "value": 1 }
+                            ],
+                            "filter": false,
+                            "sort": false,
+                            "default": 6,
+                            "style": {
+                                "textAlign": "center",
+                                "width": "60px"
+                            }
+                        },
+                        {
+                            "type": "select",
+                            "attr": "type",
+                            "width": "100px",
+                            "title": "type",
+                            "tooltip": "type_tt",
+                            "filter": false,
+                            "sort": false,
+                            "options": [
+                                { "label": "Android", "value": "Android" },
+                                { "label": "Jointspace", "value": "Jointspace" }
+                            ],
+                            "default": "Android",
+                            "style": {
+                                "width": "100px"
+                            }
+                        },
+                        {
+                            "type": "selectSendTo",
+                            "title": "icon64",
+                            "tooltip": "icon64_tt",
+                            "attr": "picture",
+                            "disabled": "!data.activ",
+                            "jsonData": "{\"icon\":{\"icons\":${JSON.stringify(globalData.icons)}}}",
+                            "command": "getIconList",
+                            "width": "200px",
+                            "alsoDependsOn": ["icons"],
+                            "style": {
+                                "textAlign": "center",
+                                "width": "200px"
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "attr": "mon_vol",
+                            "width": "60px",
+                            "title": "tracking_volume",
+                            "tooltip": "tracking_volume_tt",
+                            "default": false,
+                            "style": {
+                                "textAlign": "center",
+                                "width": "60px"
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "attr": "mon_channel",
+                            "width": "60px",
+                            "title": "tracking_channel",
+                            "tooltip": "tracking_channel_tt",
+                            "default": false,
+                            "style": {
+                                "textAlign": "center",
+                                "width": "60px"
+                            }
+                        },
+                        {
+                            "type": "checkbox",
+                            "attr": "mon_fav",
+                            "width": "60px",
+                            "title": "tracking_fav",
+                            "tooltip": "tracking_fav_tt",
+                            "default": false,
+                            "style": {
+                                "textAlign": "center",
+                                "width": "60px"
+                            }
+                        },
+                        {
+                            "type": "textSendTo",
+                            "attr": "username",
+                            "container": "text",
+                            "width": "100px",
+                            "title": "username",
+                            "tooltip": "username_tt",
+                            "filter": false,
+                            "sort": false,
+                            "readOnly": true,
+                            "command": "getUN",
+                            "jsonData": "{\"user\":{\"name\":${JSON.stringify(data.ip)}}}",
+                            "alsoDependsOn": ["ip", "active"],
+                            "disabled": "data.username",
+                            "default": "",
+                            "style": {
+                                "width": "100px"
+                            }
+                        },
+                        {
+                            "type": "textSendTo",
+                            "attr": "password",
+                            "width": "100px",
+                            "title": "password",
+                            "tooltip": "password_tt",
+                            "filter": false,
+                            "sort": false,
+                            "readOnly": true,
+                            "command": "getPW",
+                            "jsonData": "{\"user\":{\"word\":${JSON.stringify(data.ip)}}}",
+                            "alsoDependsOn": ["ip", "active"],
+                            "disabled": "data.password",
+                            "default": "",
+                            "style": {
+                                "width": "100px"
+                            }
+                        },
+                        {
+                            "type": "textSendTo",
+                            "attr": "pin",
+                            "width": "100px",
+                            "title": "pin_tv",
+                            "tooltip": "pin_tv_tt",
+                            "filter": false,
+                            "sort": false,
+                            "readOnly": true,
+                            "command": "getPin",
+                            "jsonData": "{\"user\":{\"pin\":${JSON.stringify(data.ip)}}}",
+                            "alsoDependsOn": ["ip", "active"],
+                            "disabled": "data.password",
+                            "default": "",
+                            "style": {
+                                "width": "100px"
+                            }
+                        }
+                    ]
+                },
+                "dividerafterdevice": {
+                    "newLine": true,
+                    "type": "divider"
+                },
+                "interval": {
+                    "type": "number",
+                    "newLine": true,
+                    "sm": 3,
+                    "label": "interval",
+                    "default": 5
+                },
+                "dividerafterinterval": {
+                    "newLine": true,
+                    "type": "divider"
+                },
+                "selectText": {
+                    "newLine": true,
+                    "type": "textSendTo",
+                    "container": "div",
+                    "label": "text_pair",
+                    "tooltip": "text_pair_tt",
+                    "command": "getTEXT",
+                    "jsonData": "${JSON.stringify(data.selectTV)}",
+                    "alsoDependsOn": ["selectTV", "submitPair", "submitPair", "pinCode", "tv", "selectText"],
+                    "sm": 12,
+                    "style": {
+                        "backgroundColor": "#4dabf5",
+                        "color": "white",
+                        "fontSize": "24px"
+                    }
+                },
+                "selectTV": {
+                    "newLine": true,
+                    "type": "selectSendTo",
+                    "label": "select_tv",
+                    "tooltip": "select_tv_tt",
+                    "command": "getTV",
+                    "sm": 3,
+                    "jsonData": "{\"tv\":{\"tvs\":${JSON.stringify(data.tv)}}}"
+                },
+                "submitPair": {
+                    "type": "sendTo",
+                    "command": "pairing",
+                    "jsonData": "${JSON.stringify(data.selectTV)}",
+                    "label": "pair",
+                    "tooltip": "pair_tt",
+                    "disabled": "!data.selectTV",
+                    "style": {
+                        "backgroundColor": "#4dabf5",
+                        "color": "white",
+                        "margin": "12px",
+                        "padding": "4px"
+                    }
+                },
+                "pinCode": {
+                    "newLine": true,
+                    "type": "text",
+                    "label": "pin",
+                    "tooltip": "pin_tt",
+                    "sm": 3,
+                    "disabled": "!data.selectTV"
+                },
+                "submitPin": {
+                    "type": "sendTo",
+                    "command": "submitPin",
+                    "jsonData": "{\"pair\":{\"tv\":${JSON.stringify(data.selectTV)},\"pin\":${JSON.stringify(data.pinCode)}}}",
+                    "label": "submitpair",
+                    "tooltip": "submitpair_tt",
+                    "disabled": "!data.selectTV || !data.pinCode",
+                    "style": {
+                        "backgroundColor": "#4dabf5",
+                        "color": "white",
+                        "margin": "12px",
+                        "padding": "4px"
+                    }
+                }
+            }
+        },
+        "tab2": {
+            "type": "panel",
+            "label": "Tab icons",
+            "items": {
+                "_headerAlexa": {
+                    "type": "header",
+                    "text": "Info icons",
+                    "size": 2
+                },
+                "icons": {
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "noDelete": false,
+                    "type": "table",
+                    "style": {
+                        "textAlign": "center"
+                    },
+                    "items": [
+                        {
+                            "type": "text",
+                            "attr": "iconname",
+                            "width": "50%",
+                            "title": "iconname",
+                            "tooltip": "iconname_tt",
+                            "filter": true,
+                            "sort": true,
+                            "default": ""
+                        },
+                        {
+                            "type": "image",
+                            "attr": "picture",
+                            "width": "50%",
+                            "title": "upload",
+                            "tooltip": "upload_tt",
+                            "accept": "image/*",
+                            "base64": true,
+                            "crop": true
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
