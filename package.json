@@ -16,7 +16,7 @@
     "url": "git@github.com:Lucky-ESA/ioBroker.philips-android-tv.git"
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 16"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^3.0.3",
