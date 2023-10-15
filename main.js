@@ -260,7 +260,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         const data = this.adapterConfig != null ? this.adapterConfig["native"] : "";
         let save_conf = false;
         if (data != null) {
-            this.log.info(JSON.stringify(data));
+            this.log.debug(JSON.stringify(data));
             if (data["selectTV"] != null && data["selectTV"] != "") {
                 data["selectTV"] = "";
                 save_conf = true;
@@ -272,7 +272,6 @@ class PhilipsAndroidTv extends utils.Adapter {
             if (data["tv"] != null) {
                 for (const dev of data["tv"]) {
                     if (dev.username == "" && data["data_secret"] && data["data_secret"][dev.ip]) {
-                        this.log.info("TEST5");
                         save_conf = true;
                         dev.username = data["data_secret"][dev.ip].username;
                         dev.password = data["data_secret"][dev.ip].password;
@@ -680,7 +679,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 delete this.double_call[obj._id];
                 return;
             } else if (obj.command === "pairing") {
-                this.log.info(JSON.stringify(obj));
+                this.log.debug(JSON.stringify(obj));
                 if (obj && obj.message && obj.message != "") {
                     const ip = this.forbidden_ip(obj.message);
                     if (this.clients[ip] == null) {
@@ -704,7 +703,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                             );
                             //const pair = { error_id: "SUCCESS", auth_key: "OK" };
                             this.log.info(`Response request - ${JSON.stringify(pair)}`);
-                            this.log.info(`Response request - ${JSON.stringify(pair.error_id)}`);
+                            this.log.debug(`Response request - ${JSON.stringify(pair.error_id)}`);
                             if (pair && pair.error_id && pair.error_id == "SUCCESS" && pair.auth_key != "") {
                                 pair.auth_key = this.encrypt(pair.auth_key);
                                 pair.pw = pair.auth_key;
@@ -759,7 +758,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 }
                 return;
             } else if (obj.command === "submitPin") {
-                this.log.info(JSON.stringify(obj));
+                this.log.debug(JSON.stringify(obj));
                 if (obj && obj.message && obj.message.pair && obj.message.pair.tv != "" && obj.message.pair.pin != "") {
                     const ip = this.forbidden_ip(obj.message.pair.tv);
                     if (!this.pairing[ip]) {
@@ -969,7 +968,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             `curl -X ${methode} ${dig}` + `--insecure --connect-timeout 5 ` + `${pw}` + `${data}` + `${request}`,
         ).then(
             (out) => {
-                //this.log.info(out.stdout + out.stderr);
+                this.log.debug("OUT: " + out.stdout + " - " + out.stderr);
                 try {
                     return JSON.parse(out.stdout);
                 } catch (e) {
