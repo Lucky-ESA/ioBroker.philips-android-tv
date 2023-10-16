@@ -427,7 +427,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
             if (channel === "settings") {
-                this.setSettings(state, deviceId, id);
+                this.log.debug(`SETS: ${command}`);
+                this.setSettings(state, deviceId, id, command);
                 return;
             }
             if (channel === "own_request" && command === "sent_request" && state.val) {
@@ -577,7 +578,35 @@ class PhilipsAndroidTv extends utils.Adapter {
         }
     }
 
-    async setSettings(state, deviceId, id) {
+    async setSettings(state, deviceId, id, set) {
+        if (set === "channel" || (set && set.toString().indexOf("favorite_") !== -1)) {
+            this.log.debug(`CHANNEL: ${JSON.stringify(this.clients[deviceId].channel)}`);
+            if (this.clients[deviceId].channel) {
+                const ccid = this.clients[deviceId].channel.Channel.find((entry) => entry.ccid == state.val);
+                this.log.debug(`CCID: ${JSON.stringify(ccid)}`);
+                if (ccid) {
+                    const channel = {
+                        channelList: {
+                            id: this.clients[deviceId].channel.id,
+                        },
+                        channel: {
+                            ccid: state.val,
+                        },
+                    };
+                    this.setAckFlag(id);
+                    this.clients[deviceId].apiTV.sendRequest(channel, "channel");
+                }
+            }
+            return;
+        } else if (set === "mute") {
+            this.clients[deviceId].apiTV.sendRequest(state.val, "muted");
+            this.setAckFlag(id);
+            return;
+        } else if (set === "volume") {
+            this.clients[deviceId].apiTV.sendRequest(state.val, "vol");
+            this.setAckFlag(id);
+            return;
+        }
         const obj = await this.getObjectAsync(id);
         if (obj && obj.native && obj.native.node_id && obj.native.send) {
             const data = {
