@@ -14,7 +14,6 @@ const axios = require("axios").default;
 const crypto_1 = require("crypto");
 const exec = require("node-exec-promise").exec;
 const fs = require("fs");
-
 class PhilipsAndroidTv extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -336,9 +335,18 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.setStateChanged(`${ip}.status.network`, JSON.stringify(data), true);
                 break;
             case "update":
-                if (!data || !data.powerstate || data.powerstate.powerstate != "On") {
-                    this.log.warn(`TV ${ip} is offline`);
+                if (data && data.powerstate && data.powerstate.powerstate == "Standby") {
+                    this.log.debug(`TV ${ip} is in Standby`);
+                    this.setStateChanged(`${ip}.status.online_text`, "Standby", true);
                     this.setStateChanged(`${ip}.status.online`, false, true);
+                } else if (data && data.powerstate && data.powerstate.powerstate == "On") {
+                    this.log.debug(`TV ${ip} is Online`);
+                    this.setStateChanged(`${ip}.status.online`, true, true);
+                    this.setStateChanged(`${ip}.status.online_text`, "On", true);
+                } else if (!data || !data.powerstate || data.powerstate.powerstate != "On") {
+                    this.log.debug(`TV ${ip} is offline`);
+                    this.setStateChanged(`${ip}.status.online`, false, true);
+                    this.setStateChanged(`${ip}.status.online_text`, "Off", true);
                     return;
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
