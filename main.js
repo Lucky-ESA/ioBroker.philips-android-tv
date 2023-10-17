@@ -14,6 +14,7 @@ const axios = require("axios").default;
 const crypto_1 = require("crypto");
 const exec = require("node-exec-promise").exec;
 const fs = require("fs");
+
 class PhilipsAndroidTv extends utils.Adapter {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -213,14 +214,6 @@ class PhilipsAndroidTv extends utils.Adapter {
                 await this.createChannel(dev, channel);
                 dev.apiTV.checkInterval(true);
             } else {
-                try {
-                    if (fs.existsSync(`${this.adapterDir}/lib/data/${dev.dp}_channel`)) {
-                        channel = fs.readFileSync(`${this.adapterDir}/lib/data/${dev.dp}_channel`, "utf-8");
-                        dev.channel = JSON.parse(channel);
-                    }
-                } catch (err) {
-                    dev.channel = null;
-                }
                 this.log.info(`Device ${dev.ip} is Offline! Monitoring is started.`);
                 this.log.debug(`CHECK: ${check}`);
                 dev.apiTV.checkInterval(false);
@@ -229,25 +222,38 @@ class PhilipsAndroidTv extends utils.Adapter {
             this.log.debug(`REQUEST_ID: ${dev.request_id}`);
             await this.createRequest(dev);
             this.clients[dev.dp] = Object.assign({}, dev);
-            if (!dev.channel) {
-                await this.setChannel(dev.dp, channel);
-            }
+            await this.setChannel(dev.dp, channel);
+            await this.setFavorite(dev);
             this.clientsIDdelete.push(dev);
         }
         this.checkDeviceFolder();
     }
 
+    async setFavorite(id) {
+        let fav_new;
+        if (id.fav && Object.keys(id.fav).length > 0) {
+            fs.writeFileSync(`${this.adapterDir}/lib/data/${id.dp}_favorite`, JSON.stringify(id.fav), "utf-8");
+        } else {
+            try {
+                if (fs.existsSync(`${this.adapterDir}/lib/data/${id.dp}_favorite`)) {
+                    fav_new = fs.readFileSync(`${this.adapterDir}/lib/data/${id.dp}_favorite`, "utf-8");
+                    this.clients[id].fav = JSON.parse(fav_new);
+                }
+            } catch (err) {
+                this.clients[id].fav = null;
+            }
+        }
+    }
+
     async setChannel(id, channel) {
+        let channel_new;
         if (channel && channel.Channel) {
             fs.writeFileSync(`${this.adapterDir}/lib/data/${id}_channel`, JSON.stringify(channel), "utf-8");
-            if (this.clients[id]) {
-                this.clients[id].channel = channel;
-            }
         } else {
             try {
                 if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_channel`)) {
-                    channel = fs.readFileSync(`${this.adapterDir}/lib/data/${id}_channel`, "utf-8");
-                    this.clients[id].channel = JSON.parse(channel);
+                    channel_new = fs.readFileSync(`${this.adapterDir}/lib/data/${id}_channel`, "utf-8");
+                    this.clients[id].channel = JSON.parse(channel_new);
                 }
             } catch (err) {
                 this.clients[id].channel = null;
@@ -303,6 +309,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     await this.delObjectAsync(`${id}`, { recursive: true });
                     fs.rmSync(`${this.adapterDir}/lib/data/${id}_struct`);
                     fs.rmSync(`${this.adapterDir}/lib/data/${id}_channel`);
+                    fs.rmSync(`${this.adapterDir}/lib/data/${id}_favorite`);
                 }
             }
         } catch (e) {
@@ -312,17 +319,13 @@ class PhilipsAndroidTv extends utils.Adapter {
 
     offline_TV(ip, state) {
         this.tv[ip] = state;
-        let on = 0;
+        let on = false;
         for (const id in this.tv) {
             if (this.tv[id]) {
-                ++on;
+                on = true;
             }
         }
-        if (on != 0) {
-            this.setStateChanged(`info.connection`, true, true);
-        } else {
-            this.setStateChanged(`info.connection`, false, true);
-        }
+        this.setStateChanged(`info.connection`, on, true);
     }
 
     data_TV(ip, data, setData) {
@@ -335,6 +338,28 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.setStateChanged(`${ip}.status.network`, JSON.stringify(data), true);
                 break;
             case "update":
+                if (
+                    data &&
+                    data["activities/tv"] &&
+                    data["activities/tv"].channel &&
+                    data["activities/tv"].channel.ccid
+                ) {
+                    this.setStateChanged(`${ip}.remote.settings.channel`, data["activities/tv"].channel.ccid, true);
+                    if (this.clients[ip] && this.clients[ip].fav && Object.keys(this.clients[ip].fav).length > 0) {
+                        for (const fav in this.clients[ip].fav) {
+                            if (
+                                this.clients[ip].fav[fav] != null &&
+                                this.clients[ip].fav[fav].includes(data["activities/tv"].channel.ccid)
+                            ) {
+                                this.setStateChanged(
+                                    `${ip}.remote.settings.${fav}`,
+                                    data["activities/tv"].channel.ccid,
+                                    true,
+                                );
+                            }
+                        }
+                    }
+                }
                 if (data && data.powerstate && data.powerstate.powerstate == "Standby") {
                     this.log.debug(`TV ${ip} is in Standby`);
                     this.setStateChanged(`${ip}.status.online_text`, "Standby", true);
@@ -403,7 +428,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             const command = idParts.pop();
             const channel = idParts.pop();
             const deviceId = id.split(".")[2];
-            this.log.info(`COMMOND: ${command} - CHANNEL: ${channel} - ID: ${deviceId} - STATE: ${state.val}`);
+            this.log.debug(`COMMOND: ${command} - CHANNEL: ${channel} - ID: ${deviceId} - STATE: ${state.val}`);
             if (command === "json" || command === "address" || command === "methode" || command === "path") {
                 this.setAckFlag(id);
                 return;
