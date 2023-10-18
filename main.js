@@ -344,8 +344,15 @@ class PhilipsAndroidTv extends utils.Adapter {
                     data["activities/tv"].channel &&
                     data["activities/tv"].channel.ccid
                 ) {
-                    this.setStateChanged(`${ip}.remote.settings.channel`, data["activities/tv"].channel.ccid, true);
-                    if (this.clients[ip] && this.clients[ip].fav && Object.keys(this.clients[ip].fav).length > 0) {
+                    if (this.clients[ip] && this.clients[ip].mon_channel) {
+                        this.setStateChanged(`${ip}.remote.settings.channel`, data["activities/tv"].channel.ccid, true);
+                    }
+                    if (
+                        this.clients[ip] &&
+                        this.clients[ip].fav &&
+                        Object.keys(this.clients[ip].fav).length > 0 &&
+                        this.clients[ip].mon_fav
+                    ) {
                         for (const fav in this.clients[ip].fav) {
                             if (
                                 this.clients[ip].fav[fav] != null &&
