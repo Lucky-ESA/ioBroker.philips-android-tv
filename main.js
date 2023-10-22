@@ -38,6 +38,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.createRequest = helper.createRequest;
         this.createVolume = helper.createVolume;
         this.createChannel = helper.createChannel;
+        this.createAurora = helper.createAurora;
         this.double_call = {};
         this.clients = {};
         this.pairing = {};
@@ -169,9 +170,16 @@ class PhilipsAndroidTv extends utils.Adapter {
                     dev.username,
                     "GET",
                 );
+                const topology = await this.getRequest(
+                    `${dev.https}/ambilight/topology`,
+                    null,
+                    dev.password,
+                    dev.username,
+                    "GET",
+                );
                 if (struct && struct.node) {
                     this.log.info(`Create settings for device ${dev.ip}`);
-                    await this.createSettings(dev, struct);
+                    await this.createSettings(dev, struct, topology);
                     dev.apiTV.setNewAPI(dev, struct);
                     fs.writeFileSync(`${this.adapterDir}/lib/data/${dev.dp}_struct`, JSON.stringify(struct), "utf-8");
                 } else {
@@ -212,8 +220,19 @@ class PhilipsAndroidTv extends utils.Adapter {
                 }
                 channel = await this.getRequest(`${dev.https}/channeldb/tv`, null, dev.password, dev.username, "GET");
                 await this.createChannel(dev, channel);
+                if (check.featuring.jsonfeatures.aurora.includes("available")) {
+                    await this.createAurora(dev, fs);
+                }
                 dev.apiTV.checkInterval(true);
             } else {
+                try {
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${dev.dp}_aurora`)) {
+                        const aurora = fs.readFileSync(`${this.adapterDir}/lib/data/${dev.dp}_aurora`, "utf-8");
+                        dev.aurora = JSON.parse(aurora);
+                    }
+                } catch (err) {
+                    dev.aurora = null;
+                }
                 this.log.info(`Device ${dev.ip} is Offline! Monitoring is started.`);
                 this.log.debug(`CHECK: ${check}`);
                 dev.apiTV.checkInterval(false);
@@ -307,9 +326,18 @@ class PhilipsAndroidTv extends utils.Adapter {
                 } else {
                     this.log.info(`Delete data point ${element["_id"]}`);
                     await this.delObjectAsync(`${id}`, { recursive: true });
-                    fs.rmSync(`${this.adapterDir}/lib/data/${id}_struct`);
-                    fs.rmSync(`${this.adapterDir}/lib/data/${id}_channel`);
-                    fs.rmSync(`${this.adapterDir}/lib/data/${id}_favorite`);
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_struct`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_struct`);
+                    }
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_channel`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_channel`);
+                    }
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_favorite`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_favorite`);
+                    }
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_aurora`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_aurora`);
+                    }
                 }
             }
         } catch (e) {
@@ -463,10 +491,64 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.setSettings(state, deviceId, id, command);
                 return;
             }
+            if (channel === "aurora") {
+                this.log.debug(`SETS: ${command}`);
+                this.setAurora(state, deviceId, id, command);
+                return;
+            }
             if (channel === "own_request" && command === "sent_request" && state.val) {
                 this.sentRequest(deviceId);
                 return;
             }
+        }
+    }
+
+    async setAurora(state, deviceId, id, command) {
+        this.log.debug(`AURORA: ${JSON.stringify(this.clients[deviceId].aurora)}`);
+        if (
+            !this.clients[deviceId] ||
+            !this.clients[deviceId].aurora ||
+            !this.clients[deviceId].aurora.node ||
+            !this.clients[deviceId].aurora.node.data ||
+            !this.clients[deviceId].aurora.node.data.nodes
+        ) {
+            this.log.error(`Cannot sent aurora request!`);
+            return;
+        }
+        const name = command.charAt(0).toUpperCase() + command.substring(1);
+        this.log.debug(`name: ${name}`);
+        const find_dp = this.clients[deviceId].aurora.node.data.nodes.find((mes) => mes.context === command);
+        if (find_dp) {
+            this.log.debug(`find_dp: ${JSON.stringify(find_dp)}`);
+            const find_id = find_dp.data.enums.find((mes) => mes.enum_id === state.val);
+            if (find_id) {
+                this.log.debug(`find_id: ${JSON.stringify(find_id)}`);
+                const req = {
+                    values: [{ value: { node_id: find_dp.node_id, data: { selected_item: find_id.enum_id } } }],
+                };
+                const expert = { current: "expert" };
+                const answer_mode = await this.clients[deviceId].apiTV.requests(
+                    `${this.clients[deviceId].https}/ambilight/mode`,
+                    JSON.stringify(expert),
+                    this.clients[deviceId].password,
+                    this.clients[deviceId].username,
+                    "POST",
+                );
+                this.log.debug(`ModeAurora: ${answer_mode}`);
+                const answer_key = await this.clients[deviceId].apiTV.requests(
+                    `${this.clients[deviceId].https}/aurora/settings/update`,
+                    JSON.stringify(req),
+                    this.clients[deviceId].password,
+                    this.clients[deviceId].username,
+                    "POST",
+                );
+                this.log.debug(`AnswerAurora: ${answer_key}`);
+                this.setAckFlag(id);
+            } else {
+                this.log.warn(`Cannot find value ${state.val} in Aurora!`);
+            }
+        } else {
+            this.log.warn(`Cannot find ${command} in Aurora!`);
         }
     }
 
@@ -628,6 +710,53 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.setAckFlag(id);
                     this.clients[deviceId].apiTV.sendRequest(channel, "channel");
                 }
+            }
+            return;
+        } else if (
+            set === "ambilight_rgb_left" ||
+            set === "ambilight_rgb_right" ||
+            set === "ambilight_rgb_top" ||
+            set === "ambilight_rgb_bottom"
+        ) {
+            try {
+                const fullHex = (hex) => {
+                    let r = hex.slice(1, 2);
+                    let g = hex.slice(2, 3);
+                    let b = hex.slice(3, 4);
+                    r = parseInt(r + r, 16);
+                    g = parseInt(g + g, 16);
+                    b = parseInt(b + b, 16);
+                    return { r, g, b };
+                };
+                const hex2rgb = (hex) => {
+                    if (hex.length === 4) {
+                        return fullHex(hex);
+                    }
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return { r, g, b };
+                };
+                state.val = `#${state.val.replace("#", "")}`;
+                if (state.val != null && (state.val.length === 4 || state.val.length === 7)) {
+                    const hex = hex2rgb(state.val);
+                    if (hex != null && hex.r != null && hex.g != null && hex.b != null) {
+                        this.clients[deviceId].apiTV.sendColor(hex, "hex", set);
+                        this.setAckFlag(id);
+                        return;
+                    }
+                }
+            } catch (e) {
+                this.log.info(`HEX Error: ${JSON.stringify(e)}`);
+            }
+        } else if (set === "ambilight_hex") {
+            try {
+                const rgb = JSON.parse(state.val);
+                this.clients[deviceId].apiTV.sendColor(rgb, "rgb");
+                this.setAckFlag(id);
+                return;
+            } catch (e) {
+                this.log.info(`RGB Error: ${JSON.stringify(e)}`);
             }
             return;
         } else if (set === "mute") {
