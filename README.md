@@ -39,13 +39,18 @@
 
 🇩🇪 [Fragen](https://forum.iobroker.net/topic/8791/test-adapter-philips-tv-v0-2-x)
 
-## Changelog
+## ToDo
 
 -   Created notification json
 -   Added V5
 -   Added V1
 
-## ToDo
+## Changelog
+
+<!--
+    Placeholder for the next version (at the beginning of the line):
+    ### **WORK IN PROGRESS**
+-->
 
 ### 0.0.1
 

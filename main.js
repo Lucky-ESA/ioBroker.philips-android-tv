@@ -12,7 +12,8 @@ const helper = require("./lib/helper");
 const constants = require("./lib/constants");
 const axios = require("axios").default;
 const crypto_1 = require("crypto");
-const exec = require("node-exec-promise").exec;
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
 const fs = require("fs");
 
 class PhilipsAndroidTv extends utils.Adapter {
@@ -147,6 +148,14 @@ class PhilipsAndroidTv extends utils.Adapter {
             dev.apiTV.on("offline", this.offline_TV.bind(this));
             dev.apiTV.on("data", this.data_TV.bind(this));
             const check = await dev.apiTV.getSystem(`${dev.http}/system`, null);
+            //const check = await this.getRequest(
+            //    `${dev.https}/system`,
+            //    { userid: dev.username },
+            //    dev.password,
+            //    dev.username,
+            //    "GET",
+            //);
+            this.log.debug(`SYSTEM: ${JSON.stringify(check)}`);
             this.log.info(`Create device ${dev.ip}`);
             await this.createTV(dev, check);
             let struct;
@@ -427,6 +436,7 @@ class PhilipsAndroidTv extends utils.Adapter {
     onUnload(callback) {
         try {
             for (const id in this.clients) {
+                this.resetFavorite(this.clients[id].dp);
                 this.clients[id].apiTV.destroy();
             }
             callback();
@@ -692,8 +702,228 @@ class PhilipsAndroidTv extends utils.Adapter {
         }
     }
 
+    resetFavorite(dp) {
+        this.setState(`${dp}.remote.settings.favorite_refresh`, false, true);
+        this.setState(`${dp}.remote.settings.favorite_select`, 0, true);
+        this.setState(`${dp}.remote.settings.favorite_add`, JSON.stringify([]), true);
+        this.setState(`${dp}.remote.settings.favorite_channel_delete`, JSON.stringify([]), true);
+        this.setState(`${dp}.remote.settings.favorite_sort`, JSON.stringify([]), true);
+        this.setState(`${dp}.remote.settings.favorite_name`, "", true);
+        this.setState(`${dp}.remote.settings.favorite_delete`, false, true);
+        this.setState(`${dp}.remote.settings.favorite_create_channel`, JSON.stringify([]), true);
+        this.setState(`${dp}.remote.settings.favorite_create_name`, false, true);
+        this.setState(`${dp}.remote.settings.favorite_create`, "", true);
+    }
+
+    async favorite_id(dp) {
+        return await this.getStateAsync(`${dp}.remote.settings.favorite_select`);
+    }
+
+    async checkFavorite(id, channel, fav_id, methode) {
+        if (fav_id == null || fav_id.val === 0 || !this.clients[id].channel) {
+            this.log.debug(`Favorite id 0 is not allowed - ${JSON.stringify(channel)}`);
+            return false;
+        }
+        try {
+            channel = JSON.parse(channel);
+        } catch (e) {
+            this.log.debug(`checkFavorite: ${e}`);
+            return false;
+        }
+        const new_channel = [];
+        if (channel && Object.keys(channel).length > 0) {
+            const fav = await this.valueFavorite(id, fav_id.val);
+            for (const ccid of channel) {
+                const ccid_channel = this.clients[id].channel.Channel.find((entry) => entry.ccid == ccid);
+                const ccid_fav = fav.channels.find((entry) => entry.ccid == ccid);
+                if (!ccid_channel) {
+                    this.log.debug(`Cannot find ${ccid} in the channellist!`);
+                } else if (ccid_fav && methode === 1) {
+                    this.log.debug(`Channel ID ${ccid} already exists!`);
+                } else if (!ccid_fav && methode === 2) {
+                    this.log.debug(`Channel ID ${ccid} cannot delete!`);
+                } else if (methode === 3) {
+                    new_channel.push(ccid);
+                } else {
+                    new_channel.push(ccid);
+                }
+            }
+            if (new_channel && Object.keys(new_channel).length > 0) {
+                return new_channel;
+            } else {
+                return false;
+            }
+        } else {
+            this.log.info("E2: " + JSON.stringify(channel));
+            return false;
+        }
+    }
+
+    diffArray(arr1, arr2) {
+        try {
+            arr1 = typeof arr1 !== "object" ? JSON.parse(arr1) : arr1;
+            arr2 = typeof arr2 !== "object" ? JSON.parse(arr2) : arr2;
+            const diff = (a, b) => a.filter((item) => b.indexOf(item) === -1);
+            const diff1 = diff(arr1, arr2);
+            const diff2 = diff(arr2, arr1);
+            return [].concat(diff1, diff2);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async valueFavorite(deviceId, id) {
+        return await this.getRequest(
+            `${this.clients[deviceId].https}/channeldb/tv/favoriteLists/${id}`,
+            null,
+            this.clients[deviceId].password,
+            this.clients[deviceId].username,
+            "GET",
+        );
+    }
+
     async setSettings(state, deviceId, id, set) {
-        if (set === "channel" || (set && set.toString().indexOf("favorite_") !== -1)) {
+        // ToDo check - Channel list must be activated
+        if (set === "favorite_refresh") {
+            const channel = await this.getRequest(
+                `${this.clients[deviceId].https}/channeldb/tv`,
+                null,
+                this.clients[deviceId].password,
+                this.clients[deviceId].username,
+                "GET",
+            );
+            await this.createChannel(this.clients[deviceId], channel);
+            this.resetFavorite(this.clients[deviceId].dp);
+            this.setAckFlag(id, { val: false });
+        } else if (set === "favorite_select") {
+            if (state.val == 0) {
+                this.resetFavorite(this.clients[deviceId].dp);
+            } else {
+                const fav = await this.valueFavorite(deviceId, state.val);
+                const all_channel = [];
+                if (fav && fav.channels && Object.keys(fav.channels).length > 0) {
+                    for (const fav_id of fav.channels) {
+                        all_channel.push(fav_id.ccid);
+                    }
+                }
+                if (all_channel && Array.isArray(all_channel) && Object.keys(all_channel).length > 0) {
+                    if (fav && fav.name) {
+                        this.setState(`${this.clients[deviceId].dp}.remote.settings.favorite_name`, fav.name, true);
+                    }
+                    this.setState(
+                        `${this.clients[deviceId].dp}.remote.settings.favorite_sort`,
+                        JSON.stringify(all_channel),
+                        true,
+                    );
+                } else {
+                    this.log.info(`The favourite ${fav.name} is empty`);
+                }
+            }
+            this.setAckFlag(id);
+        } else if (set === "favorite_name") {
+            const fav_id = await this.favorite_id(this.clients[deviceId].dp);
+            if (
+                state &&
+                state.val != null &&
+                state.val != "" &&
+                fav_id != null &&
+                fav_id.val != null &&
+                typeof fav_id.val == "number" &&
+                fav_id.val > 0
+            ) {
+                const name = { name: state.val };
+                const answer_name = await this.clients[deviceId].apiTV.sendRequest(name, "fav", fav_id.val);
+                this.log.debug(`ANSWER NAME: ${JSON.stringify(answer_name)}`);
+                this.setAckFlag(id);
+            }
+        } else if (set === "favorite_add") {
+            const fav_id = await this.favorite_id(this.clients[deviceId].dp);
+            const check_fav = await this.checkFavorite(deviceId, state.val, fav_id, 1);
+            if (check_fav && fav_id != null) {
+                const fav_add = { add: { channels: check_fav }, remove: { channels: [] } };
+                const answer_add = await this.clients[deviceId].apiTV.sendRequest(fav_add, "fav", fav_id.val);
+                this.log.debug(`ANSWER ADD: ${JSON.stringify(answer_add)}`);
+                this.setAckFlag(id);
+            }
+        } else if (set === "favorite_delete") {
+            const fav_id = await this.favorite_id(this.clients[deviceId].dp);
+            if (fav_id == null) {
+                this.log.warn(`Cannot found favorite id!`);
+                return;
+            }
+            const fav = await this.valueFavorite(deviceId, fav_id.val);
+            const del_fav = [];
+            if (fav && fav.channels) {
+                for (const ccid of fav.channels) {
+                    del_fav.push(ccid);
+                }
+            }
+            if (fav && fav.channels && Object.keys(fav.channels).length > 0 && fav_id != null) {
+                const fav_del = { add: { channels: [] }, remove: { channels: del_fav } };
+                await this.clients[deviceId].apiTV.sendRequest(fav_del, "fav", fav_id.val);
+                //const name = { name: set.split("_").pop() };
+                //await this.clients[deviceId].apiTV.sendRequest(name, "fav", fav_id.val);
+                this.setAckFlag(id, { val: false });
+            }
+        } else if (set === "favorite_channel_delete") {
+            const fav_id = await this.favorite_id(this.clients[deviceId].dp);
+            const check_fav = await this.checkFavorite(deviceId, state.val, fav_id, 2);
+            if (check_fav && fav_id != null) {
+                const fav_del = { add: { channels: [] }, remove: { channels: check_fav } };
+                const answer_add = await this.clients[deviceId].apiTV.sendRequest(fav_del, "fav", fav_id.val);
+                this.log.debug(`ANSWER ADD: ${JSON.stringify(answer_add)}`);
+                this.setAckFlag(id);
+            }
+        } else if (set === "favorite_sort") {
+            const fav_id = await this.favorite_id(this.clients[deviceId].dp);
+            if (fav_id == null) {
+                this.log.warn(`Cannot found favorite id!`);
+                return;
+            }
+            const fav = await this.valueFavorite(deviceId, fav_id.val);
+            const sort_fav = [];
+            if (fav && fav.channels) {
+                for (const ccid of fav.channels) {
+                    sort_fav.push(ccid);
+                }
+            }
+            const check_diff = this.diffArray(state.val, sort_fav);
+            if (check_diff != null && typeof check_diff == "object" && Object.keys(check_diff).length == 0) {
+                const fav_sort = { channels: state.val };
+                await this.clients[deviceId].apiTV.sendRequest(fav_sort, "sort", fav_id.val);
+                this.setAckFlag(id);
+            }
+        } else if (set === "favorite_create_channel") {
+            this.clients[deviceId].create_channel = state.val;
+            this.setAckFlag(id);
+        } else if (set === "favorite_create_name") {
+            this.clients[deviceId].create_name = state.val;
+            this.setAckFlag(id);
+        } else if (set === "favorite_create") {
+            let arr_fav = null;
+            try {
+                arr_fav = JSON.parse(this.clients[deviceId].create_channel);
+            } catch (e) {
+                this.log.warn(`Create Fav: ${e}`);
+                return;
+            }
+            await this.setFavorite(this.clients[deviceId]);
+            if (arr_fav && this.clients[deviceId].create_name != "" && this.clients[deviceId].fav) {
+                let id_fav = Object.keys(this.clients[deviceId].fav).length;
+                ++id_fav;
+                const fav = await this.valueFavorite(deviceId, id_fav);
+                if (fav && fav.channels && Object.keys(this.clients[deviceId].fav).length == 0) {
+                    const check_fav = await this.checkFavorite(deviceId, arr_fav, id_fav, 3);
+                    if (check_fav) {
+                        const fav_add = { add: { channels: arr_fav }, remove: { channels: [] } };
+                        await this.clients[deviceId].apiTV.sendRequest(fav_add, "fav", id_fav);
+                        const name = { name: this.clients[deviceId].create_name };
+                        await this.clients[deviceId].apiTV.sendRequest(name, "fav", id_fav);
+                        this.setAckFlag(id, { val: false });
+                    }
+                }
+            }
+        } else if (set === "channel" || (set && set.toString().indexOf("favorite_") !== -1)) {
             this.log.debug(`CHANNEL: ${JSON.stringify(this.clients[deviceId].channel)}`);
             if (this.clients[deviceId].channel) {
                 const ccid = this.clients[deviceId].channel.Channel.find((entry) => entry.ccid == state.val);
@@ -701,7 +931,10 @@ class PhilipsAndroidTv extends utils.Adapter {
                 if (ccid) {
                     const channel = {
                         channelList: {
-                            id: this.clients[deviceId].channel.id,
+                            id:
+                                set.toString().indexOf("favorite_") !== -1
+                                    ? set.split("_").pop()
+                                    : this.clients[deviceId].channel.id,
                         },
                         channel: {
                             ccid: state.val,
@@ -712,6 +945,14 @@ class PhilipsAndroidTv extends utils.Adapter {
                 }
             }
             return;
+        } else if (set === "launch_search") {
+            if (state && state.val != null && state.val != "") {
+                const search = {
+                    intent: { action: "android.search.action.GLOBAL_SEARCH", extras: { query: state.val } },
+                };
+                this.clients[deviceId].apiTV.sendRequest(search, "search");
+                this.setAckFlag(id);
+            }
         } else if (
             set === "ambilight_rgb_left" ||
             set === "ambilight_rgb_right" ||
@@ -767,28 +1008,29 @@ class PhilipsAndroidTv extends utils.Adapter {
             this.clients[deviceId].apiTV.sendRequest(state.val, "vol");
             this.setAckFlag(id);
             return;
-        }
-        const obj = await this.getObjectAsync(id);
-        if (obj && obj.native && obj.native.node_id && obj.native.send) {
-            const data = {
-                values: [{ value: { Nodeid: 0, Controllable: true, Available: true, data: {} } }],
-            };
-            data.values[0].value.Nodeid = obj.native.node_id;
-            data.values[0].value.data[obj.native.send] = state.val;
-            this.log.debug(JSON.stringify(data));
-            const answer_key = await this.clients[deviceId].apiTV.requests(
-                `${this.clients[deviceId].https}/menuitems/settings/update`,
-                JSON.stringify(data),
-                this.clients[deviceId].password,
-                this.clients[deviceId].username,
-                "POST",
-            );
-            this.setAckFlag(id);
-            if (answer_key) {
-                this.log.info(`Command ${id} sent successfully.`);
-            }
         } else {
-            this.log.info(`Command ${id} sent not successfully.`);
+            const obj = await this.getObjectAsync(id);
+            if (obj && obj.native && obj.native.node_id && obj.native.send) {
+                const data = {
+                    values: [{ value: { Nodeid: 0, Controllable: true, Available: true, data: {} } }],
+                };
+                data.values[0].value.Nodeid = obj.native.node_id;
+                data.values[0].value.data[obj.native.send] = state.val;
+                this.log.debug(JSON.stringify(data));
+                const answer_key = await this.clients[deviceId].apiTV.requests(
+                    `${this.clients[deviceId].https}/menuitems/settings/update`,
+                    JSON.stringify(data),
+                    this.clients[deviceId].password,
+                    this.clients[deviceId].username,
+                    "POST",
+                );
+                this.setAckFlag(id);
+                if (answer_key) {
+                    this.log.info(`Command ${id} sent successfully.`);
+                }
+            } else {
+                this.log.info(`Command ${id} sent not successfully.`);
+            }
         }
     }
 
@@ -1161,11 +1403,17 @@ class PhilipsAndroidTv extends utils.Adapter {
         } else {
             data = "";
         }
+        const header = `-H "Accept: application/json" -H "Content-Type: application/json; charset=UTF-8"`;
         return await exec(
-            `curl -X ${methode} ${dig}` + `--insecure --connect-timeout 5 ` + `${pw}` + `${data}` + `${request}`,
+            `curl ${header} -X ${methode} ${dig}` +
+                `--insecure --connect-timeout 5 ` +
+                `${pw}` +
+                `${data} ` +
+                `${request}`,
         ).then(
             (out) => {
                 this.log.debug("OUT: " + out.stdout + " - " + out.stderr);
+                this.log.debug("OUT DEBUG: " + JSON.stringify(out) + " - " + out.stderr);
                 try {
                     return JSON.parse(out.stdout);
                 } catch (e) {
