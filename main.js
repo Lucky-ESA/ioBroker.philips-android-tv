@@ -412,11 +412,15 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.log.debug(`TV ${ip} is Online`);
                     this.setStateChanged(`${ip}.status.online`, true, true);
                     this.setStateChanged(`${ip}.status.online_text`, "On", true);
-                } else if (!data || !data.powerstate || data.powerstate.powerstate != "On") {
+                } else if (!data || !data.powerstate || data.powerstate.powerstate == "Off") {
                     this.log.debug(`TV ${ip} is offline`);
                     this.setStateChanged(`${ip}.status.online`, false, true);
                     this.setStateChanged(`${ip}.status.online_text`, "Off", true);
-                    return;
+                }
+                if (data && data.context) {
+                    if (data.context.level1 == "WatchExtension" && data.context.level2 == "Playstate") {
+                        this.setStateChanged(`${ip}.status.input`, "HDMI", true);
+                    }
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
                 break;
