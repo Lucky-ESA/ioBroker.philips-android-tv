@@ -420,7 +420,28 @@ class PhilipsAndroidTv extends utils.Adapter {
                 if (data && data.context) {
                     if (data.context.level1 == "WatchExtension" && data.context.level2 == "Playstate") {
                         this.setStateChanged(`${ip}.status.input`, "HDMI", true);
+                    } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "aurora_options") {
+                        this.setStateChanged(`${ip}.status.input`, "AURORA", true);
+                    } else if (data.context.level2 == "Home" && data.context.level3 == "source_section") {
+                        this.setStateChanged(`${ip}.status.input`, "Google TV", true);
+                    } else if (data.context.level1 == "WatchTv" && data.context.level2 == "Playstate") {
+                        this.setStateChanged(`${ip}.status.input`, "TV", true);
+                    } else if (data.context.level1 == "EPG") {
+                        this.setStateChanged(`${ip}.status.input`, "EPG", true);
+                    } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Browsestate") {
+                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
+                    } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Favourites") {
+                        this.setStateChanged(`${ip}.status.input`, "USB", true);
+                    } else if (
+                        data.context.level1 == "NA" &&
+                        data.context.level2 == "NA" &&
+                        data.context.level3 == "NA" &&
+                        data.context.data == "NA"
+                    ) {
+                        this.setStateChanged(`${ip}.status.input`, "LAUNCH", true);
                     }
+                } else {
+                    this.setStateChanged(`${ip}.status.input`, "SETTINGS", true);
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
                 break;
@@ -633,11 +654,12 @@ class PhilipsAndroidTv extends utils.Adapter {
             }
         } else if (command === "launchAPP") {
             const appName = state.val;
-            if (!this.clients[deviceId] || !this.clients[deviceId].app) {
+            if (!this.clients[deviceId] || !this.clients[deviceId].app || !this.clients[deviceId].app.applications) {
                 this.log.error(`No apps cached, cannot launch "${appName}"`);
                 return;
             }
-            data = this.clients[deviceId].app.find((entry) => entry.label === appName);
+            this.log.info(JSON.stringify(this.clients[deviceId].app));
+            data = this.clients[deviceId].app.applications.find((entry) => entry.label === appName);
             if (!data) {
                 this.log.error(`Application "${appName}" not found`);
                 return;
