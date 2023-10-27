@@ -440,8 +440,6 @@ class PhilipsAndroidTv extends utils.Adapter {
                     ) {
                         this.setStateChanged(`${ip}.status.input`, "LAUNCH", true);
                     }
-                } else {
-                    this.setStateChanged(`${ip}.status.input`, "SETTINGS", true);
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
                 break;
