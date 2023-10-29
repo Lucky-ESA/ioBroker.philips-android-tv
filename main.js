@@ -165,6 +165,11 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.log.info(`Found device - ${dev.ip}`);
                 this.isOnline[dev.dp] = true;
                 this.setStateChanged(`info.connection`, true, true);
+                for (const key in check) {
+                    if (key.endsWith("_encrypted")) {
+                        check[key] = await this.encrypted(check[key]);
+                    }
+                }
                 await this.json2iob.parse(`${dev.dp}.system`, check, {
                     forceIndex: true,
                     preferedArrayName: null,
@@ -255,6 +260,21 @@ class PhilipsAndroidTv extends utils.Adapter {
             this.clientsIDdelete.push(dev);
         }
         this.checkDeviceFolder();
+    }
+
+    async encrypted(value) {
+        const key = Buffer.from(constants.decrypt_key, "base64");
+        const ivCiphertext = Buffer.from(value, "base64");
+        const iv = ivCiphertext.slice(0, 16);
+        const ciphertext = ivCiphertext.slice(16);
+        try {
+            const decipher = crypto_1.createDecipheriv("AES-128-CBC", key, iv);
+            // @ts-ignore
+            return decipher.update(ciphertext, "", "utf8") + decipher.final("utf8");
+        } catch (err) {
+            this.log.warn(`encrypted: ${err}`);
+            return value;
+        }
     }
 
     async setFavorite(id) {
@@ -412,7 +432,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.log.debug(`TV ${ip} is Online`);
                     this.setStateChanged(`${ip}.status.online`, true, true);
                     this.setStateChanged(`${ip}.status.online_text`, "On", true);
-                } else if (!data || !data.powerstate || data.powerstate.powerstate == "Off") {
+                } else if (data && data.powerstate && data.powerstate.powerstate == "Off") {
                     this.log.debug(`TV ${ip} is offline`);
                     this.setStateChanged(`${ip}.status.online`, false, true);
                     this.setStateChanged(`${ip}.status.online_text`, "Off", true);
@@ -426,6 +446,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                         this.setStateChanged(`${ip}.status.input`, "Google TV", true);
                     } else if (data.context.level1 == "WatchTv" && data.context.level2 == "Playstate") {
                         this.setStateChanged(`${ip}.status.input`, "TV", true);
+                    } else if (data.context.level1 == "WatchSatellite" && data.context.level2 == "Playstate") {
+                        this.setStateChanged(`${ip}.status.input`, "SATELLITE", true);
                     } else if (data.context.level1 == "EPG") {
                         this.setStateChanged(`${ip}.status.input`, "EPG", true);
                     } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Browsestate") {
@@ -438,7 +460,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                         data.context.level3 == "NA" &&
                         data.context.data == "NA"
                     ) {
-                        this.setStateChanged(`${ip}.status.input`, "LAUNCH", true);
+                        this.setStateChanged(`${ip}.status.input`, "LAUNCH APP", true);
                     }
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
@@ -530,7 +552,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
             if (channel === "own_request" && command === "sent_request" && state.val) {
-                this.sentRequest(deviceId);
+                this.sentRequest(deviceId, id);
                 return;
             }
         }
@@ -585,7 +607,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         }
     }
 
-    async sentRequest(deviceId) {
+    async sentRequest(deviceId, id) {
         if (!this.clients[deviceId]) {
             this.log.error(`Cannot sent request!`);
             return;
@@ -633,6 +655,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             auth,
         );
         this.setState(`${deviceId}.remote.own_request.result`, JSON.stringify(res), true);
+        this.setAckFlag(id, { val: false });
     }
 
     async setCommand(command, deviceId, id, state) {
