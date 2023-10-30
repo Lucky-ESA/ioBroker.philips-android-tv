@@ -153,7 +153,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             //    { userid: dev.username },
             //    dev.password,
             //    dev.username,
-            //    "GET",
+            //    "POST",
             //);
             this.log.debug(`SYSTEM: ${JSON.stringify(check)}`);
             this.log.info(`Create device ${dev.ip}`);
@@ -366,6 +366,9 @@ class PhilipsAndroidTv extends utils.Adapter {
                     }
                     if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_aurora`)) {
                         fs.rmSync(`${this.adapterDir}/lib/data/${id}_aurora`);
+                    }
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_lang`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_lang`);
                     }
                 }
             }
