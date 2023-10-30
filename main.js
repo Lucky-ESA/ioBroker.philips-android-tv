@@ -193,7 +193,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 );
                 if (struct && struct.node) {
                     this.log.info(`Create settings for device ${dev.ip}`);
-                    await this.createSettings(dev, struct, topology);
+                    await this.createSettings(dev, struct, topology, fs);
                     dev.apiTV.setNewAPI(dev, struct);
                     fs.writeFileSync(`${this.adapterDir}/lib/data/${dev.dp}_struct`, JSON.stringify(struct), "utf-8");
                 } else {
@@ -443,7 +443,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "aurora_options") {
                         this.setStateChanged(`${ip}.status.input`, "AURORA", true);
                     } else if (data.context.level2 == "Home" && data.context.level3 == "source_section") {
-                        this.setStateChanged(`${ip}.status.input`, "Google TV", true);
+                        this.setStateChanged(`${ip}.status.input`, "Settings", true);
                     } else if (data.context.level1 == "WatchTv" && data.context.level2 == "Playstate") {
                         this.setStateChanged(`${ip}.status.input`, "TV", true);
                     } else if (data.context.level1 == "WatchSatellite" && data.context.level2 == "Playstate") {
