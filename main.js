@@ -439,7 +439,10 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.setStateChanged(`${ip}.status.online_text`, "Standby", true);
                     this.setStateChanged(`${ip}.status.online`, false, true);
                 } else if (data && data.powerstate && data.powerstate.powerstate == "On") {
-                    this.log.debug(`TV ${ip} is Online`);
+                    if (!this.tv[ip]) {
+                        this.log.debug(`TV ${ip} is Online`);
+                        this.tv[ip] = true;
+                    }
                     this.setStateChanged(`${ip}.status.online`, true, true);
                     this.setStateChanged(`${ip}.status.online_text`, "On", true);
                 } else if (data && data.powerstate && data.powerstate.powerstate == "Off") {
@@ -460,7 +463,21 @@ class PhilipsAndroidTv extends utils.Adapter {
                         this.setStateChanged(`${ip}.status.input`, "SATELLITE", true);
                     } else if (data.context.level1 == "EPG") {
                         this.setStateChanged(`${ip}.status.input`, "EPG", true);
+                    } else if (
+                        data.context.level1 == "BrowseDlna" &&
+                        data.context.level2 == "Playstate" &&
+                        data.context["data"] == "DMR Playing"
+                    ) {
+                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
+                    } else if (
+                        data.context.level1 == "BrowseDlna" &&
+                        data.context.level2 == "Playstate" &&
+                        data.context["data"] == "DMR Loading"
+                    ) {
+                        this.setStateChanged(`${ip}.status.input`, "NETWORK LOADING", true);
                     } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Browsestate") {
+                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
+                    } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Playstate") {
                         this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
                     } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Favourites") {
                         this.setStateChanged(`${ip}.status.input`, "USB", true);
