@@ -41,6 +41,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.createChannel = helper.createChannel;
         this.createAurora = helper.createAurora;
         this.double_call = {};
+        this.sleepTimer = {};
         this.clients = {};
         this.pairing = {};
         this.isOnline = {};
@@ -352,6 +353,9 @@ class PhilipsAndroidTv extends utils.Adapter {
                 const isfind = this.clientsIDdelete.find((mes) => mes.dp === id);
                 if (isfind) {
                     this.log.debug(`Found data point ${element["_id"]}`);
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_pw`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_pw`);
+                    }
                 } else {
                     this.log.info(`Delete data point ${element["_id"]}`);
                     await this.delObjectAsync(`${id}`, { recursive: true });
@@ -369,6 +373,9 @@ class PhilipsAndroidTv extends utils.Adapter {
                     }
                     if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_lang`)) {
                         fs.rmSync(`${this.adapterDir}/lib/data/${id}_lang`);
+                    }
+                    if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_pw`)) {
+                        fs.rmSync(`${this.adapterDir}/lib/data/${id}_pw`);
                     }
                 }
             }
@@ -484,6 +491,7 @@ class PhilipsAndroidTv extends utils.Adapter {
     onUnload(callback) {
         try {
             for (const id in this.clients) {
+                this.sleepTimer[id] && this.clearTimeout(this.sleepTimer[id]);
                 this.resetFavorite(this.clients[id].dp);
                 this.clients[id].apiTV.destroy();
             }
@@ -544,6 +552,10 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.setKey(keyName, deviceId, id);
                 return;
             }
+            if (channel === "own_request" && command === "sent_request" && state.val) {
+                this.sentRequest(deviceId, id);
+                return;
+            }
             if (channel === "settings") {
                 this.log.debug(`SETS: ${command}`);
                 this.setSettings(state, deviceId, id, command);
@@ -554,13 +566,36 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.setAurora(state, deviceId, id, command);
                 return;
             }
-            if (channel === "own_request" && command === "sent_request" && state.val) {
-                this.sentRequest(deviceId, id);
+            if (channel === "own_request" && command === "save_pw" && state.val) {
+                const pw = {
+                    pw: this.clients[deviceId].password,
+                    user: this.clients[deviceId].username,
+                };
+                fs.writeFileSync(
+                    `${this.adapterDir}/lib/data/${this.clients[deviceId].dp}_pw`,
+                    JSON.stringify(pw),
+                    "utf-8",
+                );
+                this.log.info(
+                    `Your data has been saved under ${this.adapterDir}/lib/data/${this.clients[deviceId].dp}_pw - This file will be automatically deleted after 5 minutes!`,
+                );
+                this.deletePW(deviceId);
+                this.setAckFlag(id, { val: false });
                 return;
             }
         }
     }
 
+    deletePW(deviceId) {
+        this.sleepTimer[deviceId] = this.setTimeout(
+            () => {
+                if (fs.existsSync(`${this.adapterDir}/lib/data/${this.clients[deviceId].dp}_pw`)) {
+                    fs.rmSync(`${this.adapterDir}/lib/data/${this.clients[deviceId].dp}_pw`);
+                }
+            },
+            60 * 1000 * 5,
+        );
+    }
     async setAurora(state, deviceId, id, command) {
         this.log.debug(`AURORA: ${JSON.stringify(this.clients[deviceId].aurora)}`);
         if (
@@ -832,20 +867,41 @@ class PhilipsAndroidTv extends utils.Adapter {
         );
     }
 
-    async setSettings(state, deviceId, id, set) {
-        // ToDo check - Channel list must be activated
-        if (set === "favorite_refresh") {
-            const channel = await this.getRequest(
-                `${this.clients[deviceId].https}/channeldb/tv`,
+    async updateChannel(deviceId) {
+        const channel = await this.getRequest(
+            `${this.clients[deviceId].https}/channeldb/tv`,
+            null,
+            this.clients[deviceId].password,
+            this.clients[deviceId].username,
+            "GET",
+        );
+        await this.createChannel(this.clients[deviceId], channel);
+        this.resetFavorite(this.clients[deviceId].dp);
+    }
+
+    checkWachTV(deviceId) {
+        return new Promise((resolve) => {
+            const context = this.getRequest(
+                `${this.clients[deviceId].https}/context`,
                 null,
                 this.clients[deviceId].password,
                 this.clients[deviceId].username,
                 "GET",
             );
-            await this.createChannel(this.clients[deviceId], channel);
-            this.resetFavorite(this.clients[deviceId].dp);
+            if (context && context["level1"] == "WatchTv") {
+                resolve(true);
+            } else {
+                this.log.warn(`Please switch to TV.`);
+                resolve(false);
+            }
+        });
+    }
+    async setSettings(state, deviceId, id, set) {
+        const aktiveTV = await this.checkWachTV(deviceId);
+        if (set === "favorite_refresh") {
+            this.updateChannel(deviceId);
             this.setAckFlag(id, { val: false });
-        } else if (set === "favorite_select") {
+        } else if (set === "favorite_select" && aktiveTV) {
             if (state.val == 0) {
                 this.resetFavorite(this.clients[deviceId].dp);
             } else {
@@ -870,7 +926,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 }
             }
             this.setAckFlag(id);
-        } else if (set === "favorite_name") {
+        } else if (set === "favorite_name" && aktiveTV) {
             const fav_id = await this.favorite_id(this.clients[deviceId].dp);
             if (
                 state &&
@@ -884,18 +940,20 @@ class PhilipsAndroidTv extends utils.Adapter {
                 const name = { name: state.val };
                 const answer_name = await this.clients[deviceId].apiTV.sendRequest(name, "fav", fav_id.val);
                 this.log.debug(`ANSWER NAME: ${JSON.stringify(answer_name)}`);
-                this.setAckFlag(id);
+                this.updateChannel(deviceId);
+                this.setAckFlag(id, { val: "" });
             }
-        } else if (set === "favorite_add") {
+        } else if (set === "favorite_add" && aktiveTV) {
             const fav_id = await this.favorite_id(this.clients[deviceId].dp);
             const check_fav = await this.checkFavorite(deviceId, state.val, fav_id, 1);
             if (check_fav && fav_id != null) {
                 const fav_add = { add: { channels: check_fav }, remove: { channels: [] } };
                 const answer_add = await this.clients[deviceId].apiTV.sendRequest(fav_add, "fav", fav_id.val);
                 this.log.debug(`ANSWER ADD: ${JSON.stringify(answer_add)}`);
-                this.setAckFlag(id);
+                this.updateChannel(deviceId);
+                this.setAckFlag(id, { val: JSON.stringify([]) });
             }
-        } else if (set === "favorite_delete") {
+        } else if (set === "favorite_delete" && aktiveTV) {
             const fav_id = await this.favorite_id(this.clients[deviceId].dp);
             if (fav_id == null) {
                 this.log.warn(`Cannot found favorite id!`);
@@ -913,18 +971,20 @@ class PhilipsAndroidTv extends utils.Adapter {
                 await this.clients[deviceId].apiTV.sendRequest(fav_del, "fav", fav_id.val);
                 //const name = { name: set.split("_").pop() };
                 //await this.clients[deviceId].apiTV.sendRequest(name, "fav", fav_id.val);
+                this.updateChannel(deviceId);
                 this.setAckFlag(id, { val: false });
             }
-        } else if (set === "favorite_channel_delete") {
+        } else if (set === "favorite_channel_delete" && aktiveTV) {
             const fav_id = await this.favorite_id(this.clients[deviceId].dp);
             const check_fav = await this.checkFavorite(deviceId, state.val, fav_id, 2);
             if (check_fav && fav_id != null) {
                 const fav_del = { add: { channels: [] }, remove: { channels: check_fav } };
                 const answer_add = await this.clients[deviceId].apiTV.sendRequest(fav_del, "fav", fav_id.val);
                 this.log.debug(`ANSWER ADD: ${JSON.stringify(answer_add)}`);
-                this.setAckFlag(id);
+                this.updateChannel(deviceId);
+                this.setAckFlag(id, { val: JSON.stringify([]) });
             }
-        } else if (set === "favorite_sort") {
+        } else if (set === "favorite_sort" && aktiveTV) {
             const fav_id = await this.favorite_id(this.clients[deviceId].dp);
             if (fav_id == null) {
                 this.log.warn(`Cannot found favorite id!`);
@@ -941,15 +1001,16 @@ class PhilipsAndroidTv extends utils.Adapter {
             if (check_diff != null && typeof check_diff == "object" && Object.keys(check_diff).length == 0) {
                 const fav_sort = { channels: state.val };
                 await this.clients[deviceId].apiTV.sendRequest(fav_sort, "sort", fav_id.val);
+                this.updateChannel(deviceId);
                 this.setAckFlag(id);
             }
-        } else if (set === "favorite_create_channel") {
+        } else if (set === "favorite_create_channel" && aktiveTV) {
             this.clients[deviceId].create_channel = state.val;
             this.setAckFlag(id);
-        } else if (set === "favorite_create_name") {
+        } else if (set === "favorite_create_name" && aktiveTV) {
             this.clients[deviceId].create_name = state.val;
             this.setAckFlag(id);
-        } else if (set === "favorite_create") {
+        } else if (set === "favorite_create" && aktiveTV) {
             let arr_fav = null;
             try {
                 arr_fav = JSON.parse(this.clients[deviceId].create_channel);
@@ -969,6 +1030,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                         await this.clients[deviceId].apiTV.sendRequest(fav_add, "fav", id_fav);
                         const name = { name: this.clients[deviceId].create_name };
                         await this.clients[deviceId].apiTV.sendRequest(name, "fav", id_fav);
+                        this.updateChannel(deviceId);
                         this.setAckFlag(id, { val: false });
                     }
                 }
