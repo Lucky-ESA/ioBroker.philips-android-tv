@@ -464,6 +464,14 @@ class PhilipsAndroidTv extends utils.Adapter {
                         this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
                     } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Favourites") {
                         this.setStateChanged(`${ip}.status.input`, "USB", true);
+                    } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "sunrise_alarm") {
+                        this.setStateChanged(`${ip}.status.input`, "SUNRISE ALARM", true);
+                    } else if (
+                        data.context.level1 == "WatchTv" &&
+                        data.context.level2 == "Options" &&
+                        data.context.level3 == "channel_info"
+                    ) {
+                        this.setStateChanged(`${ip}.status.input`, "CHANNEL INFO", true);
                     } else if (
                         data.context.level1 == "NA" &&
                         data.context.level2 == "NA" &&
@@ -471,6 +479,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                         data.context.data == "NA"
                     ) {
                         this.setStateChanged(`${ip}.status.input`, "LAUNCH APP", true);
+                    } else {
+                        this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
                     }
                 }
                 this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
