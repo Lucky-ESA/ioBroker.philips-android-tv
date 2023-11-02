@@ -480,6 +480,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                     } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Playstate") {
                         this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
                     } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Favourites") {
+                        this.setStateChanged(`${ip}.status.input`, "USB FAVORITE", true);
+                    } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Browsestate") {
                         this.setStateChanged(`${ip}.status.input`, "USB", true);
                     } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "sunrise_alarm") {
                         this.setStateChanged(`${ip}.status.input`, "SUNRISE ALARM", true);
