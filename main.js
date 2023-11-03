@@ -503,6 +503,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                             this.setStateChanged(`${ip}.status.input`, "NETWORK LOADING", true);
                         } else if (data.context.level2 == "Playstate") {
                             this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
+                        } else if (data.context.level2 == "Browsestate") {
+                            this.setStateChanged(`${ip}.status.input`, "NETWORK BROWSE", true);
                         } else {
                             this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
                         }
