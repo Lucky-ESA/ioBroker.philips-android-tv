@@ -451,46 +451,73 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.setStateChanged(`${ip}.status.online_text`, "Off", true);
                 }
                 if (data && data.context) {
-                    if (data.context.level1 == "WatchExtension" && data.context.level2 == "Playstate") {
-                        this.setStateChanged(`${ip}.status.input`, "HDMI", true);
-                    } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "aurora_options") {
-                        this.setStateChanged(`${ip}.status.input`, "AURORA", true);
-                    } else if (data.context.level2 == "Home" && data.context.level3 == "source_section") {
-                        this.setStateChanged(`${ip}.status.input`, "Settings", true);
-                    } else if (data.context.level1 == "WatchTv" && data.context.level2 == "Playstate") {
-                        this.setStateChanged(`${ip}.status.input`, "TV", true);
+                    if (data.context.level1 == "WatchExtension") {
+                        if (data.context.level2 == "Playstate") {
+                            this.setStateChanged(`${ip}.status.input`, "HDMI", true);
+                        } else if (data.context.level2 == "Options") {
+                            this.setStateChanged(`${ip}.status.input`, "HDMI OPTIONS", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
+                    } else if (data.context.level2 == "Setup_Menu") {
+                        if (data.context.level3 == "aurora_options") {
+                            this.setStateChanged(`${ip}.status.input`, "AURORA", true);
+                        } else if (data.context.level3 == "sunrise_alarm") {
+                            this.setStateChanged(`${ip}.status.input`, "SUNRISE ALARM", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
+                    } else if (data.context.level2 == "Home") {
+                        if (data.context.level3 == "source_section") {
+                            this.setStateChanged(`${ip}.status.input`, "Settings", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
+                    } else if (data.context.level1 == "WatchTv") {
+                        if (data.context.level2 == "Playstate") {
+                            this.setStateChanged(`${ip}.status.input`, "TV", true);
+                        } else if (data.context.level2 == "Options" && data.context.level3 == "channel_info") {
+                            this.setStateChanged(`${ip}.status.input`, "TV CHANNEL INFO", true);
+                        } else if (data.context.level2 == "Options") {
+                            this.setStateChanged(`${ip}.status.input`, "TV CHANNEL OPTIONS", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
                     } else if (data.context.level1 == "WatchSatellite" && data.context.level2 == "Playstate") {
-                        this.setStateChanged(`${ip}.status.input`, "SATELLITE", true);
+                        if (data.context.level2 == "Playstate") {
+                            this.setStateChanged(`${ip}.status.input`, "SATELLITE", true);
+                        } else if (data.context.level2 == "Options" && data.context.level3 == "channel_info") {
+                            this.setStateChanged(`${ip}.status.input`, "SAT CHANNEL INFO", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
                     } else if (data.context.level1 == "EPG") {
                         this.setStateChanged(`${ip}.status.input`, "EPG", true);
-                    } else if (
-                        data.context.level1 == "BrowseDlna" &&
-                        data.context.level2 == "Playstate" &&
-                        data.context["data"] == "DMR Playing"
-                    ) {
-                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
-                    } else if (
-                        data.context.level1 == "BrowseDlna" &&
-                        data.context.level2 == "Playstate" &&
-                        data.context["data"] == "DMR Loading"
-                    ) {
-                        this.setStateChanged(`${ip}.status.input`, "NETWORK LOADING", true);
-                    } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Browsestate") {
-                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
-                    } else if (data.context.level1 == "BrowseDlna" && data.context.level2 == "Playstate") {
-                        this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
-                    } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Favourites") {
-                        this.setStateChanged(`${ip}.status.input`, "USB FAVORITE", true);
-                    } else if (data.context.level1 == "BrowseUsb" && data.context.level2 == "Browsestate") {
-                        this.setStateChanged(`${ip}.status.input`, "USB", true);
-                    } else if (data.context.level2 == "Setup_Menu" && data.context.level3 == "sunrise_alarm") {
-                        this.setStateChanged(`${ip}.status.input`, "SUNRISE ALARM", true);
-                    } else if (
-                        data.context.level1 == "WatchTv" &&
-                        data.context.level2 == "Options" &&
-                        data.context.level3 == "channel_info"
-                    ) {
-                        this.setStateChanged(`${ip}.status.input`, "CHANNEL INFO", true);
+                        if (data.context.level2 != "NA" || data.context.level3 != "NA" || data.context.data != "NA") {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
+                    } else if (data.context.level1 == "BrowseDlna") {
+                        if (data.context.level2 == "Playstate" && data.context["data"] == "DMR Playing") {
+                            this.setStateChanged(`${ip}.status.input`, "NETWORK PLAYING", true);
+                        } else if (data.context.level2 == "Playstate" && data.context.data == "DMR Loading") {
+                            this.setStateChanged(`${ip}.status.input`, "NETWORK LOADING", true);
+                        } else if (data.context.level2 == "Playstate") {
+                            this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
+                    } else if (data.context.level1 == "BrowseUsb") {
+                        if (data.context.level2 == "Favourites") {
+                            this.setStateChanged(`${ip}.status.input`, "USB FAVORITE", true);
+                        } else if (data.context.level2 == "Browsestate") {
+                            this.setStateChanged(`${ip}.status.input`, "USB", true);
+                        } else if (data.context.level2 == "last_played") {
+                            this.setStateChanged(`${ip}.status.input`, "USB LAST PLAYED", true);
+                        } else if (data.context.level2 == "most_popular") {
+                            this.setStateChanged(`${ip}.status.input`, "USB MOST POPULAR", true);
+                        } else {
+                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
+                        }
                     } else if (
                         data.context.level1 == "NA" &&
                         data.context.level2 == "NA" &&
@@ -825,8 +852,8 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.setState(`${dp}.remote.settings.favorite_name`, "", true);
         this.setState(`${dp}.remote.settings.favorite_delete`, false, true);
         this.setState(`${dp}.remote.settings.favorite_create_channel`, JSON.stringify([]), true);
-        this.setState(`${dp}.remote.settings.favorite_create_name`, false, true);
-        this.setState(`${dp}.remote.settings.favorite_create`, "", true);
+        this.setState(`${dp}.remote.settings.favorite_create_name`, "", true);
+        this.setState(`${dp}.remote.settings.favorite_create`, false, true);
     }
 
     async favorite_id(dp) {
