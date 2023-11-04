@@ -289,7 +289,9 @@ class PhilipsAndroidTv extends utils.Adapter {
                     this.clients[id].fav = JSON.parse(fav_new);
                 }
             } catch (err) {
-                this.clients[id].fav = null;
+                if (this.clients && this.clients[id] && this.clients[id].fav) {
+                    this.clients[id].fav = null;
+                }
             }
         }
     }
