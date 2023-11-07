@@ -868,14 +868,20 @@ class PhilipsAndroidTv extends utils.Adapter {
             return false;
         }
         try {
-            channel = JSON.parse(channel);
+            if (typeof channel != "object") {
+                channel = JSON.parse(channel);
+            }
         } catch (e) {
-            this.log.debug(`checkFavorite: ${e}`);
+            this.log.debug(`checkFavorite: ${e} - ${JSON.stringify(channel)}`);
             return false;
         }
         const new_channel = [];
         if (channel && Object.keys(channel).length > 0) {
-            const fav = await this.valueFavorite(id, fav_id.val);
+            let fav = await this.valueFavorite(id, fav_id.val);
+            if (!fav || fav == null || fav.channels == null) {
+                fav = {};
+                fav["channels"] = [];
+            }
             for (const ccid of channel) {
                 const ccid_channel = this.clients[id].channel.Channel.find((entry) => entry.ccid == ccid);
                 const ccid_fav = fav.channels.find((entry) => entry.ccid == ccid);
@@ -937,22 +943,20 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.resetFavorite(this.clients[deviceId].dp);
     }
 
-    checkWachTV(deviceId) {
-        return new Promise((resolve) => {
-            const context = this.getRequest(
-                `${this.clients[deviceId].https}/context`,
-                null,
-                this.clients[deviceId].password,
-                this.clients[deviceId].username,
-                "GET",
-            );
-            if (context && context["level1"] == "WatchTv") {
-                resolve(true);
-            } else {
-                this.log.warn(`Please switch to TV.`);
-                resolve(false);
-            }
-        });
+    async checkWachTV(deviceId) {
+        const context = await this.getRequest(
+            `${this.clients[deviceId].https}/context`,
+            null,
+            this.clients[deviceId].password,
+            this.clients[deviceId].username,
+            "GET",
+        );
+        if (context && context["level1"] == "WatchTv") {
+            return true;
+        } else {
+            this.log.warn(`Please switch to TV.`);
+            return false;
+        }
     }
     async setSettings(state, deviceId, id, set) {
         const aktiveTV = await this.checkWachTV(deviceId);
