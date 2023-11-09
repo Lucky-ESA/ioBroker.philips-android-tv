@@ -954,15 +954,44 @@ class PhilipsAndroidTv extends utils.Adapter {
         if (context && context["level1"] == "WatchTv") {
             return true;
         } else {
-            this.log.warn(`Please switch to TV.`);
             return false;
         }
     }
+
+    async checkAmbilight(deviceId) {
+        const aro = await this.getRequest(
+            `${this.clients[deviceId].https}/aurora/settings/isopen`,
+            null,
+            this.clients[deviceId].password,
+            this.clients[deviceId].username,
+            "GET",
+        );
+        if (aro && aro.isopen) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     async setSettings(state, deviceId, id, set) {
         const aktiveTV = await this.checkWachTV(deviceId);
+        // ToDo aktiveTV check false
         if (set === "favorite_refresh") {
             this.updateChannel(deviceId);
             this.setAckFlag(id, { val: false });
+        } else if (
+            !aktiveTV &&
+            (set === "favorite_create" ||
+                set === "favorite_create_name" ||
+                set === "favorite_create_channel" ||
+                set === "favorite_sort" ||
+                set === "favorite_channel_delete" ||
+                set === "favorite_delete" ||
+                set === "favorite_select" ||
+                set === "favorite_name" ||
+                set === "favorite_add")
+        ) {
+            this.log.warn(`Please switch to TV.`);
         } else if (set === "favorite_select" && aktiveTV) {
             if (state.val == 0) {
                 this.resetFavorite(this.clients[deviceId].dp);
@@ -1056,12 +1085,18 @@ class PhilipsAndroidTv extends utils.Adapter {
             const sort_fav = [];
             if (fav && fav.channels) {
                 for (const ccid of fav.channels) {
-                    sort_fav.push(ccid);
+                    sort_fav.push(ccid.ccid);
                 }
             }
             const check_diff = this.diffArray(state.val, sort_fav);
             if (check_diff != null && typeof check_diff == "object" && Object.keys(check_diff).length == 0) {
-                const fav_sort = { channels: state.val };
+                let fav_sort = {};
+                try {
+                    fav_sort = { channels: JSON.parse(state.val) };
+                } catch (e) {
+                    this.log.warn(`SORT: ${e}`);
+                    return;
+                }
                 await this.clients[deviceId].apiTV.sendRequest(fav_sort, "sort", fav_id.val);
                 this.updateChannel(deviceId);
                 this.setAckFlag(id);
@@ -1133,6 +1168,11 @@ class PhilipsAndroidTv extends utils.Adapter {
             set === "ambilight_rgb_top" ||
             set === "ambilight_rgb_bottom"
         ) {
+            const arora = await this.checkAmbilight(deviceId);
+            if (arora) {
+                this.log.warn(`Please close Aurora first!`);
+                return;
+            }
             try {
                 const fullHex = (hex) => {
                     let r = hex.slice(1, 2);
