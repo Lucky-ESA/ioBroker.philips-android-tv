@@ -43,6 +43,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.double_call = {};
         this.sleepTimer = {};
         this.clients = {};
+        this.lastValue = {};
         this.pairing = {};
         this.isOnline = {};
         this.tv = {};
@@ -143,6 +144,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 continue;
             }
             dev.dp = this.forbidden_ip(dev.ip);
+            this.lastValue[dev.dp] = null;
             this.tv[dev.dp] = false;
             this.subscribeStates(`${dev.dp}.remote.*`);
             dev.apiTV = new apiTV(dev, this);
@@ -165,7 +167,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.tv[dev.dp] = true;
                 this.log.info(`Found device - ${dev.ip}`);
                 this.isOnline[dev.dp] = true;
-                this.setStateChanged(`info.connection`, true, true);
+                this.setValue(`info.connection`, true);
                 for (const key in check) {
                     if (key.endsWith("_encrypted")) {
                         check[key] = await this.encrypted(check[key]);
@@ -392,7 +394,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 on = true;
             }
         }
-        this.setStateChanged(`info.connection`, on, true);
+        this.setValue(`info.connection`, on);
     }
 
     data_TV(ip, data, setData) {
@@ -402,7 +404,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 break;
             case "net":
                 this.clients[ip].net = data;
-                this.setStateChanged(`${ip}.status.network`, JSON.stringify(data), true);
+                this.setValue(`${ip}.status.network`, JSON.stringify(data));
                 break;
             case "update":
                 if (
@@ -412,7 +414,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     data["activities/tv"].channel.ccid
                 ) {
                     if (this.clients[ip] && this.clients[ip].mon_channel) {
-                        this.setStateChanged(`${ip}.remote.settings.channel`, data["activities/tv"].channel.ccid, true);
+                        this.setValue(`${ip}.remote.settings.channel`, data["activities/tv"].channel.ccid);
                     }
                     if (
                         this.clients[ip] &&
@@ -425,116 +427,37 @@ class PhilipsAndroidTv extends utils.Adapter {
                                 this.clients[ip].fav[fav] != null &&
                                 this.clients[ip].fav[fav].includes(data["activities/tv"].channel.ccid)
                             ) {
-                                this.setStateChanged(
-                                    `${ip}.remote.settings.${fav}`,
-                                    data["activities/tv"].channel.ccid,
-                                    true,
-                                );
+                                this.setValue(`${ip}.remote.settings.${fav}`, data["activities/tv"].channel.ccid);
                             }
                         }
                     }
                 }
                 if (data && data.powerstate && data.powerstate.powerstate == "Standby") {
                     this.log.debug(`TV ${ip} is in Standby`);
-                    this.setStateChanged(`${ip}.status.online_text`, "Standby", true);
-                    this.setStateChanged(`${ip}.status.online`, false, true);
+                    this.setValue(`${ip}.status.online_text`, "Standby");
+                    this.setValue(`${ip}.status.online`, false);
                 } else if (data && data.powerstate && data.powerstate.powerstate == "On") {
                     if (!this.tv[ip]) {
                         this.log.debug(`TV ${ip} is Online`);
                         this.tv[ip] = true;
                     }
-                    this.setStateChanged(`${ip}.status.online`, true, true);
-                    this.setStateChanged(`${ip}.status.online_text`, "On", true);
+                    this.setValue(`${ip}.status.online`, true);
+                    this.setValue(`${ip}.status.online_text`, "On");
                 } else if (data && data.powerstate && data.powerstate.powerstate == "Off") {
                     this.log.debug(`TV ${ip} is offline`);
-                    this.setStateChanged(`${ip}.status.online`, false, true);
-                    this.setStateChanged(`${ip}.status.online_text`, "Off", true);
+                    this.setValue(`${ip}.status.online`, false);
+                    this.setValue(`${ip}.status.online_text`, "Off");
                 }
-                if (data && data.context) {
-                    if (data.context.level1 == "WatchExtension") {
-                        if (data.context.level2 == "Playstate") {
-                            this.setStateChanged(`${ip}.status.input`, "HDMI", true);
-                        } else if (data.context.level2 == "Options") {
-                            this.setStateChanged(`${ip}.status.input`, "HDMI OPTIONS", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level2 == "Setup_Menu") {
-                        if (data.context.level3 == "aurora_options") {
-                            this.setStateChanged(`${ip}.status.input`, "AURORA", true);
-                        } else if (data.context.level3 == "sunrise_alarm") {
-                            this.setStateChanged(`${ip}.status.input`, "SUNRISE ALARM", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level2 == "Home") {
-                        if (data.context.level3 == "source_section") {
-                            this.setStateChanged(`${ip}.status.input`, "Settings", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level1 == "WatchTv") {
-                        if (data.context.level2 == "Playstate") {
-                            this.setStateChanged(`${ip}.status.input`, "TV", true);
-                        } else if (data.context.level2 == "Options" && data.context.level3 == "channel_info") {
-                            this.setStateChanged(`${ip}.status.input`, "TV CHANNEL INFO", true);
-                        } else if (data.context.level2 == "Options") {
-                            this.setStateChanged(`${ip}.status.input`, "TV CHANNEL OPTIONS", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level1 == "WatchSatellite" && data.context.level2 == "Playstate") {
-                        if (data.context.level2 == "Playstate") {
-                            this.setStateChanged(`${ip}.status.input`, "SATELLITE", true);
-                        } else if (data.context.level2 == "Options" && data.context.level3 == "channel_info") {
-                            this.setStateChanged(`${ip}.status.input`, "SAT CHANNEL INFO", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level1 == "EPG") {
-                        this.setStateChanged(`${ip}.status.input`, "EPG", true);
-                        if (data.context.level2 != "NA" || data.context.level3 != "NA" || data.context.data != "NA") {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level1 == "BrowseDlna") {
-                        if (data.context.level2 == "Playstate" && data.context["data"] == "DMR Playing") {
-                            this.setStateChanged(`${ip}.status.input`, "NETWORK PLAYING", true);
-                        } else if (data.context.level2 == "Playstate" && data.context.data == "DMR Loading") {
-                            this.setStateChanged(`${ip}.status.input`, "NETWORK LOADING", true);
-                        } else if (data.context.level2 == "Playstate") {
-                            this.setStateChanged(`${ip}.status.input`, "NETWORK", true);
-                        } else if (data.context.level2 == "Browsestate") {
-                            this.setStateChanged(`${ip}.status.input`, "NETWORK BROWSE", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (data.context.level1 == "BrowseUsb") {
-                        if (data.context.level2 == "Favourites") {
-                            this.setStateChanged(`${ip}.status.input`, "USB FAVORITE", true);
-                        } else if (data.context.level2 == "Browsestate") {
-                            this.setStateChanged(`${ip}.status.input`, "USB", true);
-                        } else if (data.context.level2 == "last_played") {
-                            this.setStateChanged(`${ip}.status.input`, "USB LAST PLAYED", true);
-                        } else if (data.context.level2 == "most_popular") {
-                            this.setStateChanged(`${ip}.status.input`, "USB MOST POPULAR", true);
-                        } else {
-                            this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                        }
-                    } else if (
-                        data.context.level1 == "NA" &&
-                        data.context.level2 == "NA" &&
-                        data.context.level3 == "NA" &&
-                        data.context.data == "NA"
-                    ) {
-                        this.setStateChanged(`${ip}.status.input`, "LAUNCH APP", true);
-                    } else {
-                        this.log.info(`Unknown context - ${JSON.stringify(data.context)}`);
-                    }
-                }
-                this.setStateChanged(`${ip}.status.notify`, JSON.stringify(data), true);
                 break;
             default:
                 this.log.warn(`No command implemented for data_TV of ${setData}`);
+        }
+    }
+
+    setValue(dp, value) {
+        if (!this.lastValue[dp] || this.lastValue[dp] != value) {
+            this.lastValue[dp] = value;
+            this.setState(dp, value, true);
         }
     }
 
