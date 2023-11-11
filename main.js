@@ -40,6 +40,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.createVolume = helper.createVolume;
         this.createChannel = helper.createChannel;
         this.createAurora = helper.createAurora;
+        this.waiting = null;
         this.double_call = {};
         this.sleepTimer = {};
         this.clients = {};
@@ -49,6 +50,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.tv = {};
         this.clientsIDdelete = [];
         this.lang = "de";
+        this.start = false;
         this.requestClient = axios.create({
             withCredentials: true,
         });
@@ -262,6 +264,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             await this.setFavorite(dev);
             this.clientsIDdelete.push(dev);
         }
+        this.start = true;
         this.checkDeviceFolder();
     }
 
@@ -471,6 +474,7 @@ class PhilipsAndroidTv extends utils.Adapter {
      */
     onUnload(callback) {
         try {
+            this.waiting && this.clearTimeout(this.waiting);
             for (const id in this.clients) {
                 this.sleepTimer[id] && this.clearTimeout(this.sleepTimer[id]);
                 this.resetFavorite(this.clients[id].dp);
@@ -680,6 +684,10 @@ class PhilipsAndroidTv extends utils.Adapter {
     async setCommand(command, deviceId, id, state) {
         let data = null;
         let path = null;
+        if (!this.start) {
+            this.log.warn(`Adapter is not started yet! Wait 5 seconds...`);
+            await this.sleep(5000);
+        }
         if (command === "ambilight_On_Off") {
             if (state.val) {
                 data = { power: "On" };
@@ -829,6 +837,17 @@ class PhilipsAndroidTv extends utils.Adapter {
             this.log.info("E2: " + JSON.stringify(channel));
             return false;
         }
+    }
+
+    /**
+     * @param {number} ms
+     */
+    sleep(ms) {
+        return new Promise((resolve) => {
+            this.waiting = this.setTimeout(() => {
+                resolve(true);
+            }, ms);
+        });
     }
 
     diffArray(arr1, arr2) {
