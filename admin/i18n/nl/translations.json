@@ -46,5 +46,10 @@
     "tracking_channel": "Controlekanaal",
     "tracking_channel_tt": "Kanalenlijst controleren",
     "tracking_fav": "Favoriete bewaking",
-    "tracking_fav_tt": "Favorietenlijst monitoren"
+    "tracking_fav_tt": "Favorietenlijst monitoren",
+    "notify": "op de hoogte stellen",
+    "notify_tt": "Kennisgeving",
+    "disabled": "gehandicapt",
+    "pipup": "PipUp",
+    "home": "Thuisassistent"
 }

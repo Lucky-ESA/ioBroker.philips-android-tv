@@ -40,6 +40,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         this.createVolume = helper.createVolume;
         this.createChannel = helper.createChannel;
         this.createAurora = helper.createAurora;
+        this.createNotify = helper.createNotify;
         this.waiting = null;
         this.double_call = {};
         this.sleepTimer = {};
@@ -163,6 +164,7 @@ class PhilipsAndroidTv extends utils.Adapter {
             this.log.debug(`SYSTEM: ${JSON.stringify(check)}`);
             this.log.info(`Create device ${dev.ip}`);
             await this.createTV(dev, check);
+            await this.createNotify(dev);
             let struct;
             let channel;
             if (check != null && check.notifyChange != null) {
@@ -182,6 +184,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     channelName: check.name,
                     autoCast: false,
                 });
+                this.extendObject(`${dev.dp}.system`, { common: { icon: "img/system.png" } });
                 struct = await this.getRequest(
                     `${dev.https}/menuitems/settings/structure`,
                     null,
@@ -515,12 +518,42 @@ class PhilipsAndroidTv extends utils.Adapter {
             const channel = idParts.pop();
             const deviceId = id.split(".")[2];
             this.log.debug(`COMMOND: ${command} - CHANNEL: ${channel} - ID: ${deviceId} - STATE: ${state.val}`);
-            if (command === "json" || command === "address" || command === "methode" || command === "path") {
+            if (
+                command === "json" ||
+                command === "address" ||
+                command === "methode" ||
+                command === "path" ||
+                command === "message" ||
+                command === "title" ||
+                command === "type" ||
+                command === "position" ||
+                command === "duration" ||
+                command === "transparency" ||
+                command === "color" ||
+                command === "imageurl" ||
+                command === "offset_X" ||
+                command === "offset_y" ||
+                command === "iconurl" ||
+                command === "image_width" ||
+                command === "icon" ||
+                command === "title_color" ||
+                command === "message_color" ||
+                command === "title_size" ||
+                command === "message_size" ||
+                command === "web_height" ||
+                command === "web" ||
+                command === "video"
+            ) {
                 this.setAckFlag(id);
                 return;
             }
             if (command === "wol") {
                 this.setCommand(command, deviceId, id, state);
+                return;
+            }
+            if (command === "sendNotification") {
+                this.sendNotification(deviceId, state);
+                this.setAckFlag(id, { val: false });
                 return;
             }
             if (!this.tv[deviceId] || command == null) {
@@ -569,6 +602,163 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
         }
+    }
+
+    async sendNotification(deviceId, state) {
+        if (!state.val) {
+            return;
+        }
+        if (!this.clients[deviceId]) {
+            this.log.error(`Cannot sent request!`);
+            return;
+        }
+        if (this.clients[deviceId].notify === 0) {
+            return;
+        }
+        const title = await this.getStateAsync(`${deviceId}.remote.notify.title`);
+        const message = await this.getStateAsync(`${deviceId}.remote.notify.message`);
+        const duration = await this.getStateAsync(`${deviceId}.remote.notify.duration`);
+        const position = await this.getStateAsync(`${deviceId}.remote.notify.position`);
+        const color = await this.getStateAsync(`${deviceId}.remote.notify.color`);
+        const image = await this.getStateAsync(`${deviceId}.remote.notify.imageurl`);
+        const width = await this.getStateAsync(`${deviceId}.remote.notify.image_width`);
+        let title_send = {};
+        if (title && title.val != null && title.val != "") title_send = { title: title.val };
+        let message_send = {};
+        let duration_send = {};
+        if (duration && duration.val != null && duration.val != 0) duration_send = { duration: duration.val };
+        let position_send = {};
+        if (position && position.val != null && position.val != 0) position_send = { position: position.val };
+        let image_send = {};
+        if (image && image.val != null && image.val != "") image_send = { imageurl: image.val };
+        let width_send = {};
+        if (width && width.val != null && width.val != 0) width_send = { width: width.val };
+        let color_send = {};
+        let request = "";
+        let param = {};
+        let req = "get";
+        if (this.clients[deviceId].notify === 2) {
+            const type = await this.getStateAsync(`${deviceId}.remote.notify.type`);
+            const transparency = await this.getStateAsync(`${deviceId}.remote.notify.transparency`);
+            const offset_x = await this.getStateAsync(`${deviceId}.remote.notify.offset_x`);
+            const offset_y = await this.getStateAsync(`${deviceId}.remote.notify.offset_y`);
+            const icon = await this.getStateAsync(`${deviceId}.remote.notify.iconurl`);
+            const smile = await this.getStateAsync(`${deviceId}.remote.notify.icon`);
+            let type_send = {};
+            if (type && type.val != null && type.val != 0) type_send = { type: type.val };
+            if (message && message.val != null && message.val != "") message_send = { msg: message.val };
+            let transparency_send = {};
+            if (transparency && transparency.val != null && transparency.val != 0)
+                transparency_send = { transparency: transparency.val };
+            if (color && color.val != null && color.val != 0) color_send = { bkgcolor: color.val };
+            let offset_x_send = {};
+            if (offset_x && offset_x.val != null && offset_x.val != 0) offset_x_send = { offset: offset_x.val };
+            let offset_y_send = {};
+            if (offset_y && offset_y.val != null && offset_y.val != 0) offset_y_send = { offsety: offset_y.val };
+            let icon_send = {};
+            if (icon && icon.val != null && icon.val != "") icon_send = { iconurl: icon.val };
+            let smile_send = {};
+            if (smile && smile.val != null && smile.val != 0) smile_send = { icon: smile.val };
+            request = `http://${this.clients[deviceId].ip}:7676/show?`;
+            param = {
+                params: {
+                    ...title_send,
+                    ...message_send,
+                    ...duration_send,
+                    ...position_send,
+                    ...type_send,
+                    ...transparency_send,
+                    ...color_send,
+                    ...offset_x_send,
+                    ...offset_y_send,
+                    ...image_send,
+                    ...icon_send,
+                    ...width_send,
+                    ...smile_send,
+                },
+            };
+        } else {
+            req = "post";
+            const title_color = await this.getStateAsync(`${deviceId}.remote.notify.title_color`);
+            const message_color = await this.getStateAsync(`${deviceId}.remote.notify.message_color`);
+            const title_size = await this.getStateAsync(`${deviceId}.remote.notify.title_size`);
+            const message_size = await this.getStateAsync(`${deviceId}.remote.notify.message_size`);
+            const web_height = await this.getStateAsync(`${deviceId}.remote.notify.web_height`);
+            const web = await this.getStateAsync(`${deviceId}.remote.notify.web`);
+            const video = await this.getStateAsync(`${deviceId}.remote.notify.video`);
+            let title_color_send = {};
+            if (title_color && title_color.val != null && title_color.val != "")
+                title_color_send = { titleColor: title_color.val };
+            let message_color_send = {};
+            if (message_color && message_color.val != null && message_color.val != "")
+                message_color_send = { messageColor: message_color.val };
+            if (color && color.val != null && color.val != 0) color_send = { backgroundColor: color.val };
+            let title_size_send = {};
+            if (title_size && title_size.val != null && title_size.val != 0)
+                title_size_send = { titleSize: title_size.val };
+            let message_size_send = {};
+            if (message_size && message_size.val != null && message_size.val != 0)
+                message_size_send = { messageSize: message_size.val };
+            let web_height_send = {};
+            if (web_height && web_height.val != null && web_height.val != "")
+                web_height_send = { height: web_height.val };
+            let web_send = "";
+            if (web && web.val != null && web.val != "") web_send = web.val.toString();
+            let video_send = "";
+            if (video && video.val != null && video.val != "") video_send = video.val.toString();
+            if (message && message.val != null && message.val != "") message_send = { message: message.val };
+            let att = {};
+            if (image_send.imageurl) {
+                att = {
+                    media: {
+                        image: {
+                            uri: image_send.imageurl,
+                            ...width_send,
+                        },
+                    },
+                };
+            } else if (video_send != "") {
+                att = {
+                    media: {
+                        video: {
+                            uri: video_send,
+                            ...width_send,
+                        },
+                    },
+                };
+            } else if (web_send != "") {
+                att = {
+                    media: {
+                        web: {
+                            uri: web_send,
+                            ...width_send,
+                            ...web_height_send,
+                        },
+                    },
+                };
+            }
+            image_send;
+            width_send;
+            request = `http://${this.clients[deviceId].ip}:7979/notify`;
+            param = {
+                data: {
+                    ...title_send,
+                    ...message_send,
+                    ...duration_send,
+                    ...position_send,
+                    ...title_color_send,
+                    ...message_color_send,
+                    ...color_send,
+                    ...title_size_send,
+                    ...message_size_send,
+                    ...att,
+                },
+            };
+        }
+        this.log.info(request);
+        this.log.info(JSON.stringify(param));
+        const response = await this.sendNotify(request, param, req);
+        this.log.info(`response: ${JSON.stringify(response)}`);
     }
 
     deletePW(deviceId) {
@@ -1536,7 +1726,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 delete this.double_call[obj._id];
                 return;
             }
-            this.log.debug("hm " + JSON.stringify(obj));
+            this.log.debug("onMessage: " + JSON.stringify(obj));
         }
     }
 
@@ -1599,6 +1789,28 @@ class PhilipsAndroidTv extends utils.Adapter {
                 "Accept-Language": "de-de",
                 "content-type": "application/json; charset=UTF-8",
             },
+        })
+            .then(async (res) => {
+                return res.data;
+            })
+            .catch((error) => {
+                return error;
+            });
+    }
+
+    async sendNotify(request, param, methode) {
+        return await this.requestClient({
+            method: methode,
+            maxBodyLength: Infinity,
+            url: request,
+            headers: {
+                Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent":
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+                "Accept-Language": "de-de",
+                "content-type": "application/json; charset=UTF-8",
+            },
+            ...param,
         })
             .then(async (res) => {
                 return res.data;

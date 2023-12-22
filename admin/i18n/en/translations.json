@@ -46,5 +46,10 @@
     "tracking_channel": "Monitoring Channel",
     "tracking_channel_tt": "Monitoring channel list",
     "tracking_fav": "Monitoring favorite",
-    "tracking_fav_tt": "Monitoring favorite list"
+    "tracking_fav_tt": "Monitoring favorite list",
+    "notify": "notify",
+    "notify_tt": "Notification",
+    "disabled": "disabled",
+    "pipup": "PipUp",
+    "home": "Home Assistant"
 }

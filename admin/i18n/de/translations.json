@@ -46,5 +46,10 @@
     "tracking_channel": "Kanal",
     "tracking_channel_tt": "Überwachungskanalliste",
     "tracking_fav": "Favorite",
-    "tracking_fav_tt": "Favoritenliste überwachen"
+    "tracking_fav_tt": "Favoritenliste überwachen",
+    "notify": "Benachrichtigen",
+    "notify_tt": "Benachrichtigung",
+    "disabled": "deaktiviert",
+    "pipup": "PipUp",
+    "home": "Home Aassistent"
 }

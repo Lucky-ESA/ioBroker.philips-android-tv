@@ -43,8 +43,12 @@
             "uk": "управління philips",
             "zh-cn": "飞利浦控制"
         },
-        "authors": ["Lucky-ESA <github@luckyskills.de>"],
-        "keywords": ["Control your philips android tv"],
+        "authors": [
+            "Lucky-ESA <github@luckyskills.de>"
+        ],
+        "keywords": [
+            "Control your philips android tv"
+        ],
         "license": "MIT",
         "platform": "Javascript/Node.js",
         "main": "main.js",

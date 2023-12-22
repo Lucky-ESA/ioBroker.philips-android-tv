@@ -46,5 +46,10 @@
     "tracking_channel": "Канал моніторингу",
     "tracking_channel_tt": "Моніторинг списку каналів",
     "tracking_fav": "Моніторинг улюбленого",
-    "tracking_fav_tt": "Моніторинг списку улюблених"
+    "tracking_fav_tt": "Моніторинг списку улюблених",
+    "notify": "повідомити",
+    "notify_tt": "Сповіщення",
+    "disabled": "вимкнено",
+    "pipup": "PipUp",
+    "home": "Домашній помічник"
 }

@@ -46,5 +46,10 @@
     "tracking_channel": "监控通道",
     "tracking_channel_tt": "监控通道列表",
     "tracking_fav": "监控最爱",
-    "tracking_fav_tt": "监控收藏夹列表"
+    "tracking_fav_tt": "监控收藏夹列表",
+    "notify": "通知",
+    "notify_tt": "通知",
+    "disabled": "残疾人",
+    "pipup": "画中画",
+    "home": "家庭助理"
 }

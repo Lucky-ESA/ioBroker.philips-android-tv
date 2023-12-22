@@ -94,6 +94,24 @@
                             }
                         },
                         {
+                            "type": "select",
+                            "attr": "notify",
+                            "width": "100px",
+                            "title": "notify",
+                            "tooltip": "notify_tt",
+                            "filter": false,
+                            "sort": false,
+                            "options": [
+                                { "label": "disabled", "value": 0 },
+                                { "label": "pipup", "value": 1 },
+                                { "label": "home", "value": 2 }
+                            ],
+                            "default": 0,
+                            "style": {
+                                "width": "100px"
+                            }
+                        },
+                        {
                             "type": "selectSendTo",
                             "title": "icon64",
                             "tooltip": "icon64_tt",

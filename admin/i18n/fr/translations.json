@@ -46,5 +46,10 @@
     "tracking_channel": "Canal de surveillance",
     "tracking_channel_tt": "Liste des canaux de surveillance",
     "tracking_fav": "Suivi favori",
-    "tracking_fav_tt": "Surveillance de la liste des favoris"
+    "tracking_fav_tt": "Surveillance de la liste des favoris",
+    "notify": "notifier",
+    "notify_tt": "Notification",
+    "disabled": "désactivé",
+    "pipup": "PipUp",
+    "home": "Assistante à domicile"
 }
