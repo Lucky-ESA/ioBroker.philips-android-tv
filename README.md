@@ -18,7 +18,7 @@
 [![NPM](https://nodei.co/npm/ioBroker.philips-android-tv.png?downloads=true)](https://nodei.co/npm/ioBroker.philips-android-tv/)
 
 **Tests:** </br>
-![Test and Release](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/workflows/Test%20and%20Release/badge.svg)
+[![Test and Release](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/actions/workflows/test-and-release.yml/badge.svg)](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/actions/workflows/test-and-release.yml)
 [![CodeQL](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/actions/workflows/codeql.yml/badge.svg)](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/actions/workflows/codeql.yml)
 
 ## Philips Android adapter for ioBroker
@@ -60,7 +60,7 @@
 
 MIT License
 
-Copyright (c) 2023 Lucky-ESA <github@luckyskills.de>
+Copyright (c) 2023-2024 Lucky-ESA <github@luckyskills.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
