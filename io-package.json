@@ -51,7 +51,6 @@
         },
         "tier": 3,
         "platform": "Javascript/Node.js",
-        "main": "main.js",
         "icon": "philips-android-tv.png",
         "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/Lucky-ESA/ioBroker.philips-android-tv/master/admin/philips-android-tv.png",
