@@ -1,6 +1,9 @@
 {
     "i18n": true,
     "type": "tabs",
+    "tabsStyle": {
+        "width": "calc(100% - 100px)"
+    },
     "items": {
         "tab1": {
             "type": "panel",
@@ -13,7 +16,11 @@
                 },
                 "tv": {
                     "newLine": true,
+                    "xs": 12,
                     "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12,
                     "noDelete": false,
                     "type": "table",
                     "items": [
@@ -223,7 +230,11 @@
                 "interval": {
                     "type": "number",
                     "newLine": true,
-                    "sm": 3,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "label": "interval",
                     "default": 5
                 },
@@ -240,7 +251,11 @@
                     "command": "getTEXT",
                     "jsonData": "${JSON.stringify(data.selectTV)}",
                     "alsoDependsOn": ["selectTV", "submitPair", "submitPair", "pinCode", "tv", "selectText"],
+                    "xs": 12,
                     "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "style": {
                         "backgroundColor": "#4dabf5",
                         "color": "white",
@@ -253,7 +268,11 @@
                     "label": "select_tv",
                     "tooltip": "select_tv_tt",
                     "command": "getTV",
-                    "sm": 3,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "jsonData": "{\"tv\":{\"tvs\":${JSON.stringify(data.tv)}}}"
                 },
                 "submitPair": {
@@ -263,6 +282,11 @@
                     "label": "pair",
                     "tooltip": "pair_tt",
                     "disabled": "!data.selectTV",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "style": {
                         "backgroundColor": "#4dabf5",
                         "color": "white",
@@ -275,7 +299,11 @@
                     "type": "text",
                     "label": "pin",
                     "tooltip": "pin_tt",
-                    "sm": 3,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "disabled": "!data.selectTV"
                 },
                 "submitPin": {
@@ -285,6 +313,11 @@
                     "label": "submitpair",
                     "tooltip": "submitpair_tt",
                     "disabled": "!data.selectTV || !data.pinCode",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4,
                     "style": {
                         "backgroundColor": "#4dabf5",
                         "color": "white",
@@ -304,9 +337,11 @@
                     "size": 2
                 },
                 "icons": {
+                    "xs": 12,
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
+                    "xl": 12,
                     "noDelete": false,
                     "type": "table",
                     "style": {
@@ -326,8 +361,6 @@
                         {
                             "type": "image",
                             "attr": "picture",
-                            "width": "50%",
-                            "title": "upload",
                             "tooltip": "upload_tt",
                             "accept": "image/*",
                             "base64": true,

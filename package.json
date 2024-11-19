@@ -1,7 +1,7 @@
 {
   "name": "iobroker.philips-android-tv",
   "version": "0.0.1",
-  "description": "philips control",
+  "description": "Control your philips android tv",
   "author": {
     "name": "Lucky-ESA",
     "email": "github@luckyskills.de"
@@ -9,7 +9,7 @@
   "homepage": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv",
   "license": "MIT",
   "keywords": [
-    "Control your philips android tv"
+    "ioBoker, Philips, TV, Google TV"
   ],
   "repository": {
     "type": "git",
