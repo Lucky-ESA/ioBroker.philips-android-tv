@@ -71,7 +71,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         if (obj && obj.common && obj.common.language) {
             try {
                 this.lang = obj.common.language === this.lang ? this.lang : obj.common.language;
-            } catch (e) {
+            } catch {
                 this.lang = "de";
             }
         }
@@ -93,7 +93,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         let devices = [];
         try {
             devices = typeof this.config.tv === "object" ? JSON.parse(JSON.stringify(this.config.tv)) : [];
-        } catch (e) {
+        } catch {
             devices = [];
         }
         for (const dev of devices) {
@@ -179,7 +179,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 }
                 await this.json2iob.parse(`${dev.dp}.system`, check, {
                     forceIndex: true,
-                    preferedArrayName: null,
+                    preferedArrayName: undefined,
                     dontSaveCreatedObjects: true,
                     channelName: check.name,
                     autoCast: false,
@@ -211,7 +211,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                             struct = fs.readFileSync(`${this.adapterDir}/lib/data/${dev.dp}_struct`, "utf-8");
                             dev.struct = JSON.parse(struct);
                         }
-                    } catch (err) {
+                    } catch {
                         dev.struct = null;
                     }
                 }
@@ -252,7 +252,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                         const aurora = fs.readFileSync(`${this.adapterDir}/lib/data/${dev.dp}_aurora`, "utf-8");
                         dev.aurora = JSON.parse(aurora);
                     }
-                } catch (err) {
+                } catch {
                     dev.aurora = null;
                 }
                 this.log.info(`Device ${dev.ip} is Offline! Monitoring is started.`);
@@ -278,7 +278,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         const ciphertext = ivCiphertext.slice(16);
         try {
             const decipher = crypto_1.createDecipheriv("AES-128-CBC", key, iv);
-            // @ts-ignore
+            // @ts-expect-error nothing
             return decipher.update(ciphertext, "", "utf8") + decipher.final("utf8");
         } catch (err) {
             this.log.warn(`encrypted: ${err}`);
@@ -296,7 +296,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     fav_new = fs.readFileSync(`${this.adapterDir}/lib/data/${id.dp}_favorite`, "utf-8");
                     this.clients[id].fav = JSON.parse(fav_new);
                 }
-            } catch (err) {
+            } catch {
                 this.clients[id.dp].fav = null;
             }
         }
@@ -312,7 +312,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     channel_new = fs.readFileSync(`${this.adapterDir}/lib/data/${id}_channel`, "utf-8");
                     this.clients[id].channel = JSON.parse(channel_new);
                 }
-            } catch (err) {
+            } catch {
                 this.clients[id].channel = null;
             }
         }
@@ -350,15 +350,12 @@ class PhilipsAndroidTv extends utils.Adapter {
         }
     }
 
-    /**
-     *
-     */
     async checkDeviceFolder() {
         try {
             const devices = await this.getDevicesAsync();
             for (const element of devices) {
                 const id = element["_id"].split(".").pop();
-                const isfind = this.clientsIDdelete.find((mes) => mes.dp === id);
+                const isfind = this.clientsIDdelete.find(mes => mes.dp === id);
                 if (isfind) {
                     this.log.debug(`Found data point ${element["_id"]}`);
                     if (fs.existsSync(`${this.adapterDir}/lib/data/${id}_pw`)) {
@@ -473,6 +470,7 @@ class PhilipsAndroidTv extends utils.Adapter {
 
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
+     *
      * @param {() => void} callback
      */
     onUnload(callback) {
@@ -484,7 +482,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 this.clients[id].apiTV.destroy();
             }
             callback();
-        } catch (e) {
+        } catch {
             callback();
         }
     }
@@ -508,6 +506,7 @@ class PhilipsAndroidTv extends utils.Adapter {
 
     /**
      * Is called if a subscribed state changes
+     *
      * @param {string} id
      * @param {ioBroker.State | null | undefined} state
      */
@@ -623,16 +622,26 @@ class PhilipsAndroidTv extends utils.Adapter {
         const image = await this.getStateAsync(`${deviceId}.remote.notify.imageurl`);
         const width = await this.getStateAsync(`${deviceId}.remote.notify.image_width`);
         let title_send = {};
-        if (title && title.val != null && title.val != "") title_send = { title: title.val };
+        if (title && title.val != null && title.val != "") {
+            title_send = { title: title.val };
+        }
         let message_send = {};
         let duration_send = {};
-        if (duration && duration.val != null && duration.val != 0) duration_send = { duration: duration.val };
+        if (duration && duration.val != null && duration.val != 0) {
+            duration_send = { duration: duration.val };
+        }
         let position_send = {};
-        if (position && position.val != null && position.val != 0) position_send = { position: position.val };
+        if (position && position.val != null && position.val != 0) {
+            position_send = { position: position.val };
+        }
         let image_send = {};
-        if (image && image.val != null && image.val != "") image_send = { imageurl: image.val };
+        if (image && image.val != null && image.val != "") {
+            image_send = { imageurl: image.val };
+        }
         let width_send = {};
-        if (width && width.val != null && width.val != 0) width_send = { width: width.val };
+        if (width && width.val != null && width.val != 0) {
+            width_send = { width: width.val };
+        }
         let color_send = {};
         let request = "";
         let param = {};
@@ -645,20 +654,35 @@ class PhilipsAndroidTv extends utils.Adapter {
             const icon = await this.getStateAsync(`${deviceId}.remote.notify.iconurl`);
             const smile = await this.getStateAsync(`${deviceId}.remote.notify.icon`);
             let type_send = {};
-            if (type && type.val != null && type.val != 0) type_send = { type: type.val };
-            if (message && message.val != null && message.val != "") message_send = { msg: message.val };
+            if (type && type.val != null && type.val != 0) {
+                type_send = { type: type.val };
+            }
+            if (message && message.val != null && message.val != "") {
+                message_send = { msg: message.val };
+            }
             let transparency_send = {};
-            if (transparency && transparency.val != null && transparency.val != 0)
+            if (transparency && transparency.val != null && transparency.val != 0) {
                 transparency_send = { transparency: transparency.val };
-            if (color && color.val != null && color.val != 0) color_send = { bkgcolor: color.val };
+            }
+            if (color && color.val != null && color.val != 0) {
+                color_send = { bkgcolor: color.val };
+            }
             let offset_x_send = {};
-            if (offset_x && offset_x.val != null && offset_x.val != 0) offset_x_send = { offset: offset_x.val };
+            if (offset_x && offset_x.val != null && offset_x.val != 0) {
+                offset_x_send = { offset: offset_x.val };
+            }
             let offset_y_send = {};
-            if (offset_y && offset_y.val != null && offset_y.val != 0) offset_y_send = { offsety: offset_y.val };
+            if (offset_y && offset_y.val != null && offset_y.val != 0) {
+                offset_y_send = { offsety: offset_y.val };
+            }
             let icon_send = {};
-            if (icon && icon.val != null && icon.val != "") icon_send = { iconurl: icon.val };
+            if (icon && icon.val != null && icon.val != "") {
+                icon_send = { iconurl: icon.val };
+            }
             let smile_send = {};
-            if (smile && smile.val != null && smile.val != 0) smile_send = { icon: smile.val };
+            if (smile && smile.val != null && smile.val != 0) {
+                smile_send = { icon: smile.val };
+            }
             request = `http://${this.clients[deviceId].ip}:7676/show?`;
             param = {
                 params: {
@@ -687,26 +711,39 @@ class PhilipsAndroidTv extends utils.Adapter {
             const web = await this.getStateAsync(`${deviceId}.remote.notify.web`);
             const video = await this.getStateAsync(`${deviceId}.remote.notify.video`);
             let title_color_send = {};
-            if (title_color && title_color.val != null && title_color.val != "")
+            if (title_color && title_color.val != null && title_color.val != "") {
                 title_color_send = { titleColor: title_color.val };
+            }
             let message_color_send = {};
-            if (message_color && message_color.val != null && message_color.val != "")
+            if (message_color && message_color.val != null && message_color.val != "") {
                 message_color_send = { messageColor: message_color.val };
-            if (color && color.val != null && color.val != 0) color_send = { backgroundColor: color.val };
+            }
+            if (color && color.val != null && color.val != 0) {
+                color_send = { backgroundColor: color.val };
+            }
             let title_size_send = {};
-            if (title_size && title_size.val != null && title_size.val != 0)
+            if (title_size && title_size.val != null && title_size.val != 0) {
                 title_size_send = { titleSize: title_size.val };
+            }
             let message_size_send = {};
-            if (message_size && message_size.val != null && message_size.val != 0)
+            if (message_size && message_size.val != null && message_size.val != 0) {
                 message_size_send = { messageSize: message_size.val };
+            }
             let web_height_send = {};
-            if (web_height && web_height.val != null && web_height.val != "")
+            if (web_height && web_height.val != null && web_height.val != "") {
                 web_height_send = { height: web_height.val };
+            }
             let web_send = "";
-            if (web && web.val != null && web.val != "") web_send = web.val.toString();
+            if (web && web.val != null && web.val != "") {
+                web_send = web.val.toString();
+            }
             let video_send = "";
-            if (video && video.val != null && video.val != "") video_send = video.val.toString();
-            if (message && message.val != null && message.val != "") message_send = { message: message.val };
+            if (video && video.val != null && video.val != "") {
+                video_send = video.val.toString();
+            }
+            if (message && message.val != null && message.val != "") {
+                message_send = { message: message.val };
+            }
             let att = {};
             if (image_send.imageurl) {
                 att = {
@@ -785,10 +822,10 @@ class PhilipsAndroidTv extends utils.Adapter {
         }
         const name = command.charAt(0).toUpperCase() + command.substring(1);
         this.log.debug(`name: ${name}`);
-        const find_dp = this.clients[deviceId].aurora.node.data.nodes.find((mes) => mes.context === command);
+        const find_dp = this.clients[deviceId].aurora.node.data.nodes.find(mes => mes.context === command);
         if (find_dp) {
             this.log.debug(`find_dp: ${JSON.stringify(find_dp)}`);
-            const find_id = find_dp.data.enums.find((mes) => mes.enum_id === state.val);
+            const find_id = find_dp.data.enums.find(mes => mes.enum_id === state.val);
             if (find_id) {
                 this.log.debug(`find_id: ${JSON.stringify(find_id)}`);
                 const req = {
@@ -897,7 +934,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
             this.log.info(JSON.stringify(this.clients[deviceId].app));
-            data = this.clients[deviceId].app.applications.find((entry) => entry.label === appName);
+            data = this.clients[deviceId].app.applications.find(entry => entry.label === appName);
             if (!data) {
                 this.log.error(`Application "${appName}" not found`);
                 return;
@@ -914,13 +951,12 @@ class PhilipsAndroidTv extends utils.Adapter {
                 if (lan == null || lan.val == null) {
                     this.log.error(`Cannot load mac!`);
                     return;
-                } else {
-                    try {
-                        this.clients[deviceId].net = JSON.parse(lan.val.toString());
-                    } catch (e) {
-                        this.log.error(`Error mac: ${JSON.stringify(e)}`);
-                        return;
-                    }
+                }
+                try {
+                    this.clients[deviceId].net = JSON.parse(lan.val.toString());
+                } catch (e) {
+                    this.log.error(`Error mac: ${JSON.stringify(e)}`);
+                    return;
                 }
             }
             if (!this.clients[deviceId].net[0] || !this.clients[deviceId].net[1]) {
@@ -937,7 +973,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
             for (let i = 0; i < 5; i++) {
-                wol.wake(mac, { address: "255.255.255.255" }, (error) => {
+                wol.wake(mac, { address: "255.255.255.255" }, error => {
                     if (error) {
                         this.log.info(`Error sending wol: ${JSON.stringify(error)}`);
                     } else {
@@ -1004,8 +1040,8 @@ class PhilipsAndroidTv extends utils.Adapter {
                 fav["channels"] = [];
             }
             for (const ccid of channel) {
-                const ccid_channel = this.clients[id].channel.Channel.find((entry) => entry.ccid == ccid);
-                const ccid_fav = fav.channels.find((entry) => entry.ccid == ccid);
+                const ccid_channel = this.clients[id].channel.Channel.find(entry => entry.ccid == ccid);
+                const ccid_fav = fav.channels.find(entry => entry.ccid == ccid);
                 if (!ccid_channel) {
                     this.log.debug(`Cannot find ${ccid} in the channellist!`);
                 } else if (ccid_fav && methode === 1) {
@@ -1020,20 +1056,18 @@ class PhilipsAndroidTv extends utils.Adapter {
             }
             if (new_channel && Object.keys(new_channel).length > 0) {
                 return new_channel;
-            } else {
-                return false;
             }
-        } else {
-            this.log.info("E2: " + JSON.stringify(channel));
             return false;
         }
+        this.log.info(`E2: ${JSON.stringify(channel)}`);
+        return false;
     }
 
     /**
      * @param {number} ms
      */
     sleep(ms) {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             this.waiting = this.setTimeout(() => {
                 resolve(true);
             }, ms);
@@ -1044,11 +1078,11 @@ class PhilipsAndroidTv extends utils.Adapter {
         try {
             arr1 = typeof arr1 !== "object" ? JSON.parse(arr1) : arr1;
             arr2 = typeof arr2 !== "object" ? JSON.parse(arr2) : arr2;
-            const diff = (a, b) => a.filter((item) => b.indexOf(item) === -1);
+            const diff = (a, b) => a.filter(item => b.indexOf(item) === -1);
             const diff1 = diff(arr1, arr2);
             const diff2 = diff(arr2, arr1);
             return [].concat(diff1, diff2);
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -1085,9 +1119,8 @@ class PhilipsAndroidTv extends utils.Adapter {
         );
         if (context && context["level1"] == "WatchTv") {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     async checkAmbilight(deviceId) {
@@ -1100,9 +1133,8 @@ class PhilipsAndroidTv extends utils.Adapter {
         );
         if (aro && aro.isopen) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     async setSettings(state, deviceId, id, set) {
@@ -1267,7 +1299,7 @@ class PhilipsAndroidTv extends utils.Adapter {
         } else if (set === "channel" || (set && set.toString().indexOf("favorite_") !== -1)) {
             this.log.debug(`CHANNEL: ${JSON.stringify(this.clients[deviceId].channel)}`);
             if (this.clients[deviceId].channel) {
-                const ccid = this.clients[deviceId].channel.Channel.find((entry) => entry.ccid == state.val);
+                const ccid = this.clients[deviceId].channel.Channel.find(entry => entry.ccid == state.val);
                 this.log.debug(`CCID: ${JSON.stringify(ccid)}`);
                 if (ccid) {
                     const channel = {
@@ -1306,7 +1338,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                 return;
             }
             try {
-                const fullHex = (hex) => {
+                const fullHex = hex => {
                     let r = hex.slice(1, 2);
                     let g = hex.slice(2, 3);
                     let b = hex.slice(3, 4);
@@ -1315,7 +1347,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     b = parseInt(b + b, 16);
                     return { r, g, b };
                 };
-                const hex2rgb = (hex) => {
+                const hex2rgb = hex => {
                     if (hex.length === 4) {
                         return fullHex(hex);
                     }
@@ -1411,6 +1443,7 @@ class PhilipsAndroidTv extends utils.Adapter {
     /**
      * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
      * Using this method requires "common.messagebox" property to be set to true in io-package.json
+     *
      * @param {ioBroker.Message} obj
      */
     async onMessage(obj) {
@@ -1418,15 +1451,6 @@ class PhilipsAndroidTv extends utils.Adapter {
             return;
         }
         this.double_call[obj._id] = true;
-        let adapterconfigs = {};
-        try {
-            // @ts-ignore
-            adapterconfigs = this.adapterConfig;
-        } catch (error) {
-            this.sendTo(obj.from, obj.command, [], obj.callback);
-            delete this.double_call[obj._id];
-            return;
-        }
         if (typeof obj === "object" && obj.message) {
             if (obj.command === "getPW") {
                 if (obj && obj.message && obj.message != "" && obj.message.user != "" && obj.message.user.word != "") {
@@ -1706,8 +1730,10 @@ class PhilipsAndroidTv extends utils.Adapter {
                     const icons = [];
                     if (obj && obj.message && obj.message.icon && obj.message.icon.icons) {
                         icon_array = obj.message.icon.icons;
-                    } else if (adapterconfigs && adapterconfigs.native && adapterconfigs.native.icons) {
-                        icon_array = adapterconfigs.native.icons;
+                    } else {
+                        delete this.double_call[obj._id];
+                        this.sendTo(obj.from, obj.command, [], obj.callback);
+                        return;
                     }
                     if (icon_array && Object.keys(icon_array).length > 0) {
                         for (const icon of icon_array) {
@@ -1719,20 +1745,24 @@ class PhilipsAndroidTv extends utils.Adapter {
                     } else {
                         this.sendTo(obj.from, obj.command, [], obj.callback);
                     }
-                } catch (error) {
+                } catch {
                     delete this.double_call[obj._id];
                     this.sendTo(obj.from, obj.command, [], obj.callback);
                 }
                 delete this.double_call[obj._id];
                 return;
             }
-            this.log.debug("onMessage: " + JSON.stringify(obj));
+            this.log.debug(`onMessage: ${JSON.stringify(obj)}`);
         }
     }
 
     setPairingData(ip, data) {
-        if (!this.pairing[ip]) this.pairing[ip] = {};
-        if (this.pairing[ip] && data != null && !this.pairing[ip][data]) this.pairing[ip][data] = {};
+        if (!this.pairing[ip]) {
+            this.pairing[ip] = {};
+        }
+        if (this.pairing[ip] && data != null && !this.pairing[ip][data]) {
+            this.pairing[ip][data] = {};
+        }
     }
 
     async getRequest(request, data, pw, user, methode) {
@@ -1757,9 +1787,9 @@ class PhilipsAndroidTv extends utils.Adapter {
                 `${data} ` +
                 `${request}`,
         ).then(
-            (out) => {
-                this.log.debug("OUT: " + out.stdout + " - " + out.stderr);
-                this.log.debug("OUT DEBUG: " + JSON.stringify(out) + " - " + out.stderr);
+            out => {
+                this.log.debug(`OUT: ${out.stdout} - ${out.stderr}`);
+                this.log.debug(`OUT DEBUG: ${JSON.stringify(out)} - ${out.stderr}`);
                 try {
                     return JSON.parse(out.stdout);
                 } catch (e) {
@@ -1770,7 +1800,7 @@ class PhilipsAndroidTv extends utils.Adapter {
                     return false;
                 }
             },
-            (err) => {
+            err => {
                 this.log.debug(`paring: ${JSON.stringify(err)}`);
                 return false;
             },
@@ -1790,10 +1820,10 @@ class PhilipsAndroidTv extends utils.Adapter {
                 "content-type": "application/json; charset=UTF-8",
             },
         })
-            .then(async (res) => {
+            .then(async res => {
                 return res.data;
             })
-            .catch((error) => {
+            .catch(error => {
                 return error;
             });
     }
@@ -1812,10 +1842,10 @@ class PhilipsAndroidTv extends utils.Adapter {
             },
             ...param,
         })
-            .then(async (res) => {
+            .then(async res => {
                 return res.data;
             })
-            .catch((error) => {
+            .catch(error => {
                 return error;
             });
     }
@@ -1841,7 +1871,7 @@ if (require.main !== module) {
     /**
      * @param {Partial<utils.AdapterOptions>} [options={}]
      */
-    module.exports = (options) => new PhilipsAndroidTv(options);
+    module.exports = options => new PhilipsAndroidTv(options);
 } else {
     // otherwise start the instance directly
     new PhilipsAndroidTv();
