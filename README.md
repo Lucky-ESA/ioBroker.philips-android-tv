@@ -23,12 +23,12 @@
 
 ## Philips Android adapter for ioBroker
 
--   Remote control for Philips Android V6 TV
--   Monitoring for Philips Android V6 TV
+- Remote control for Philips Android V6 TV
+- Monitoring for Philips Android V6 TV
 
 ## Requirements
 
--   Philips Android TV V6
+- Philips Android TV V6
 
 ## Description
 
@@ -41,9 +41,9 @@
 
 ## ToDo
 
--   Created notification json
--   Added V5
--   Added V1
+- Created notification json
+- Added V5
+- Added V1
 
 ## Changelog
 
@@ -54,13 +54,13 @@
 
 ### 0.0.1
 
--   (Lucky-ESA) initial release
+- (Lucky-ESA) initial release
 
 ## License
 
 MIT License
 
-Copyright (c) 2023-2024 Lucky-ESA <github@luckyskills.de>
+Copyright (c) 2023-2025 Lucky-ESA <github@luckyskills.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
