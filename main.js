@@ -274,8 +274,8 @@ class PhilipsAndroidTv extends utils.Adapter {
     async encrypted(value) {
         const key = Buffer.from(constants.decrypt_key, "base64");
         const ivCiphertext = Buffer.from(value, "base64");
-        const iv = ivCiphertext.slice(0, 16);
-        const ciphertext = ivCiphertext.slice(16);
+        const iv = new Uint8Array(ivCiphertext.subarray(0, 16));
+        const ciphertext = new Uint8Array(ivCiphertext.subarray(16));
         try {
             const decipher = crypto_1.createDecipheriv("AES-128-CBC", key, iv);
             // @ts-expect-error nothing
