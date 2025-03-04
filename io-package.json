@@ -49,6 +49,9 @@
             "license": "MIT",
             "type": "free"
         },
+        "osDependencies": {
+            "linux": ["curl"]
+        },
         "tier": 3,
         "platform": "Javascript/Node.js",
         "icon": "philips-android-tv.png",

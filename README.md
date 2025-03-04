@@ -6,7 +6,7 @@
 [![GitHub license](https://img.shields.io/github/license/Lucky-ESA/ioBroker.philips-android-tv)](https://github.com/Lucky-ESA/ioBroker.philips-android-tv/blob/main/LICENSE)
 [![NPM version](https://img.shields.io/npm/v/ioBroker.philips-android-tv.svg)](https://www.npmjs.com/package/ioBroker.philips-android-tv)
 [![Downloads](https://img.shields.io/npm/dm/ioBroker.philips-android-tv.svg)](https://www.npmjs.com/package/ioBroker.philips-android-tv)
-![Number of Installations](https://iobroker.live/badges/imap-installed.svg)
+![Number of Installations](https://iobroker.live/badges/philips-android-tv-installed.svg)
 ![GitHub size](https://img.shields.io/github/repo-size/Lucky-ESA/ioBroker.philips-android-tv)</br>
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Lucky-ESA/ioBroker.philips-android-tv)
 ![GitHub commits since latest release](https://img.shields.io/github/commits-since/Lucky-ESA/ioBroker.philips-android-tv/latest)
