@@ -1,62 +1,62 @@
 {
-    "name": "iobroker.philips-android-tv",
-    "version": "0.0.1",
-    "description": "Control your philips android tv",
-    "author": {
-        "name": "Lucky-ESA",
-        "email": "github@luckyskills.de"
-    },
-    "homepage": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv",
-    "license": "MIT",
-    "keywords": [
-        "ioBoker, Philips, TV, Google TV"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:Lucky-ESA/ioBroker.philips-android-tv.git"
-    },
-    "engines": {
-        "node": ">= 20"
-    },
-    "dependencies": {
-        "@iobroker/adapter-core": "^3.3.2",
-        "json2iob": "^2.6.17",
-        "multicast-dns": "^7.2.5",
-        "wake_on_lan": "^1.0.0"
-    },
-    "devDependencies": {
-        "@iobroker/adapter-dev": "^1.4.0",
-        "@iobroker/eslint-config": "^2.1.0",
-        "@iobroker/testing": "^5.1.1",
-        "@tsconfig/node18": "^18.2.4",
-        "@types/node": "^24.3.0",
-        "typescript": "~5.9.3"
-    },
-    "main": "main.js",
-    "files": [
-        "admin{,/!(src)/**}/!(tsconfig|tsconfig.*|.eslintrc).{json,json5}",
-        "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
-        "lib/",
-        "www/",
-        "io-package.json",
-        "LICENSE",
-        "main.js"
-    ],
-    "scripts": {
-        "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
-        "test:package": "mocha test/package --exit",
-        "test:integration": "mocha test/integration --exit",
-        "test": "npm run test:js && npm run test:package",
-        "check": "tsc --noEmit -p tsconfig.check.json",
-        "lint": "eslint -c eslint.config.mjs .",
-        "translate": "translate-adapter",
-        "release": "release-script",
-        "release-patch": "release-script patch --yes",
-        "release-minor": "release-script minor --yes",
-        "release-major": "release-script major --yes"
-    },
-    "bugs": {
-        "url": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv/issues"
-    },
-    "readmeFilename": "README.md"
+  "name": "iobroker.philips-android-tv",
+  "version": "0.0.1",
+  "description": "Control your philips android tv",
+  "author": {
+    "name": "Lucky-ESA",
+    "email": "github@luckyskills.de"
+  },
+  "homepage": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv",
+  "license": "MIT",
+  "keywords": [
+    "ioBoker, Philips, TV, Google TV"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Lucky-ESA/ioBroker.philips-android-tv.git"
+  },
+  "engines": {
+    "node": ">= 20"
+  },
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.3.2",
+    "json2iob": "^2.6.21",
+    "multicast-dns": "^7.2.5",
+    "wake_on_lan": "^1.0.0"
+  },
+  "devDependencies": {
+    "@iobroker/adapter-dev": "^1.5.0",
+    "@iobroker/eslint-config": "^2.2.0",
+    "@iobroker/testing": "^5.2.2",
+    "@tsconfig/node18": "^18.2.6",
+    "@types/node": "^24.10.4",
+    "typescript": "~5.9.3"
+  },
+  "main": "main.js",
+  "files": [
+    "admin{,/!(src)/**}/!(tsconfig|tsconfig.*|.eslintrc).{json,json5}",
+    "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
+    "lib/",
+    "www/",
+    "io-package.json",
+    "LICENSE",
+    "main.js"
+  ],
+  "scripts": {
+    "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
+    "test:package": "mocha test/package --exit",
+    "test:integration": "mocha test/integration --exit",
+    "test": "npm run test:js && npm run test:package",
+    "check": "tsc --noEmit -p tsconfig.check.json",
+    "lint": "eslint -c eslint.config.mjs .",
+    "translate": "translate-adapter",
+    "release": "release-script",
+    "release-patch": "release-script patch --yes",
+    "release-minor": "release-script minor --yes",
+    "release-major": "release-script major --yes"
+  },
+  "bugs": {
+    "url": "https://github.com/Lucky-ESA/ioBroker.philips-android-tv/issues"
+  },
+  "readmeFilename": "README.md"
 }
