@@ -10,11 +10,11 @@ const apiTV = require("./lib/api");
 const wol = require("wake_on_lan");
 const helper = require("./lib/helper");
 const constants = require("./lib/constants");
-const axios = require("axios").default;
-const crypto_1 = require("crypto");
-const util = require("util");
-const exec = util.promisify(require("child_process").exec);
-const fs = require("fs");
+const axios = require("axios");
+const crypto_1 = require("node:crypto");
+const util = require("node:util");
+const exec = util.promisify(require("node:child_process").exec);
+const fs = require("node:fs");
 
 class PhilipsAndroidTv extends utils.Adapter {
     /**
